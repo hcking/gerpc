@@ -4,7 +4,7 @@ import traceback
 from gevent.monkey import patch_all
 from config import configure
 from server.server import GameServer
-from log.log import log
+from util.log import log
 
 
 def main():

@@ -2,7 +2,7 @@
 import struct
 
 from server.errors import ProtocolError
-from log.log import log
+from util.log import log
 from pb.pn import ruleMap
 
 PackageMaxLen = 65535

@@ -1,6 +1,4 @@
 # coding=utf8
-import random
-import time
 
 import pb
 from pb.pn import (
@@ -14,7 +12,7 @@ from handler.fn import (
     GetRoleByContext,
 )
 
-from log.log import log
+from util.log import log
 
 
 @registerProtocol(pb.pn.protocLogin)

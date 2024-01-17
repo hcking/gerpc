@@ -3,8 +3,6 @@ from pb.pn import (
     registerProtocol
 )
 
-from log.log import log
-
 
 @registerProtocol(pb.pn.protocDictTest)
 def protocDictTestHandler(context, req, resp):
