@@ -1,0 +1,30 @@
+syntax = "proto2";
+//option optimize_for = LITE_RUNTIME;
+
+message RespResult
+{
+  optional bool  succeed = 1;
+  optional int32 extra = 2;        //意义视不同协议而定
+  optional int64 finalAtk = 3;        //最终战斗力
+  optional int64 totalExp = 4;   //当前总经验
+}
+
+message ReqLogin
+{
+  optional int64 role_id = 1;
+  optional string account = 2;
+}
+
+
+message Role {
+  optional int64 role_id = 1;
+  optional string account = 2;
+  optional string name = 3;
+  optional int32 age = 4;
+
+}
+
+message RespRoleInfo{
+  optional RespResult res = 1;
+  optional Role role = 2;
+}

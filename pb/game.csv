@@ -1,0 +1,7 @@
+ProtocolNumber,ProtoName,Request,Response,FileName
+1,Login,ReqLogin,RespResult,xx.proto
+2,RoleInfo,,RespRoleInfo,xx.proto
+3,DictTest,DictGpb,DictGpb,xx.proto
+
+99999,Unknown,DictGpb,RespResult,xx.proto
+
