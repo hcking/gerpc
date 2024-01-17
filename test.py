@@ -1,5 +1,3 @@
-import random
-
 from client import Client, getRoleId
 
 from config import configure
@@ -36,10 +34,11 @@ def doit(c):
         c.reqRoleInfo()
         c.reqRoleInfo()
         c.reqRoleInfo()
+        c.reqDictInfo()
 
 
 def main():
-    createClient(10)
+    createClient(100)
     doWork()
     wait()
     close()

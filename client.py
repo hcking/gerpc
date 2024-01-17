@@ -30,13 +30,13 @@ class Client:
         req.role_id = role_id
         req.account = str(req.role_id) + '@' + str(req.role_id)
         resp = self.requestAndWait(no, req)
-        print('reqLogin', resp)
+        return resp
 
     def reqRoleInfo(self):
         no = 2
         req = getProtocolReq(no)
         resp = self.requestAndWait(no, req)
-        print(resp)
+        return resp
 
     def reqDictInfo(self):
         no = 3
@@ -44,11 +44,11 @@ class Client:
         req['name'] = "tzz"
         req['req_id'] = 999
         resp = self.requestAndWait(no, req)
-        print(resp)
+        return resp
 
     def requestAndWait(self, no, req):
         sid = self.getSid()
-        print('requestAndWait send', no, sid, req)
+        print('requestAndWait send', no, sid)
         self.messageFunc.writeMsg(self.socket, no, req, sid)
         _, resp, sid = self.messageFunc.readMsg(self.socket)
         # print('requestAndWait recv', no, sid, type(resp))
