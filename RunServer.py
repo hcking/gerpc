@@ -13,7 +13,8 @@ def main():
     address = configure['address']
     gs = GameServer(address)
     gs.start()
-    log.info("SystemStart on %s", address)
+    log.warning("SystemStart on %s", address)
+    print("SystemStart on %s", address)
     try:
         gs.serve_forever()
     except (KeyboardInterrupt, SystemExit):
@@ -21,7 +22,8 @@ def main():
     except Exception as ex:
         log.error("SystemStart error %s,%s", ex, traceback.format_exc())
 
-    log.info("SystemExit on %s", address)
+    log.warning("SystemExit on %s", address)
+    print("SystemExit on %s", address)
     return
 
 
