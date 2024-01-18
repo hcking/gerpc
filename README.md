@@ -2,14 +2,22 @@
 
 
 <p align="center">
-    游戏服务器框架 
+    卡牌游戏服务器框架 
 </p>
 
 ---
 
+## 目录说明
+
+- **handler**: 注册处理定义协议的函数
+- **pb**: 自定义协议 生成protobuf文件
+- **persist**: 数据库读写数据orm # todo
+- **timer**: 自定义定时器 # todo
+- **server**: GameServer服务器类 接收发送消息规则
+
 ## 组件说明
 
-- **GameServer**: 基于gevent StreamServer 开启协程通信server
+- **GameServer**: 基于gevent StreamServer 开启协程通信
 - **protobuf**: 支持
 - **json**: 支持
 
