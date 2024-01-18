@@ -1,15 +1,14 @@
-import pb
 from pb.pn import (
-    registerProtocol
+    registerProtocol,
+    protocDictTest,
 )
 
 
-@registerProtocol(pb.pn.protocDictTest)
-def protocDictTestHandler(context, req, resp):
-    # log.info("protocDictTestHandler %s", req)
-    resp['ok'] = True
-    resp['code'] = 10
-    resp['resp_id'] = req.get('req_id')
-    resp['name'] = 'abcd'
-    resp['sid'] = context.sid
+@registerProtocol(protocDictTest)
+def protocDictTestHandler(context):
+    context.resp['ok'] = True
+    context.resp['code'] = 10
+    context.resp['resp_id'] = context.req.get('req_id', 0)
+    context.resp['name'] = context.req.get('name', 'foo')
+    context.resp['sid'] = context.sid
     return

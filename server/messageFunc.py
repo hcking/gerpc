@@ -3,14 +3,14 @@ import struct
 
 from server.errors import ProtocolError
 from util.log import log
-from pb.pn import ruleMap
+from pb.pn import ruleMap, getProtocolReq, getProtocolResp
 
 PackageMaxLen = 65535
 
 
 class MessageFunc:
-    def __init__(self, hdrFmt='<IIL', readIndex=0):
-        self.readIndex = readIndex  # 指定接收消息的pb位置 req or resp
+    def __init__(self, hdrFmt='<IIL', isClient=False):
+        self.isClient = isClient  # 指定读取消息时的结构 创建对象是req 还是 resp
         self.hdrFmt = hdrFmt
         self.hdrStruct = struct.Struct(hdrFmt)
         self.hdrSize = self.hdrStruct.size
@@ -21,7 +21,7 @@ class MessageFunc:
         hdr = socket.recv(self.hdrSize)
         _len = len(hdr)
 
-        if _len == 0:
+        if _len == 0:  # socket 正常关闭
             raise ProtocolError(0, 'Incomplete header 0')
 
         if _len != self.hdrSize:
@@ -44,9 +44,12 @@ class MessageFunc:
                 log.error('Incomplete data length error %s, %s', len(data), length)
                 raise ProtocolError(4, 'readMsg Incomplete data.')
 
-            req = ruleMap[no][self.readIndex]
-            if req:
-                req = req()
+            if self.isClient:
+                req = getProtocolResp(no)
+            else:
+                req = getProtocolReq(no)
+
+            if req is not None:
                 req.MergeFromString(data)
         else:
             req = None

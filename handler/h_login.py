@@ -2,7 +2,9 @@
 
 import pb
 from pb.pn import (
-    registerProtocol
+    registerProtocol,
+    protocLogin,
+    protocRoleInfo,
 )
 
 from handler.fn import (
@@ -15,31 +17,31 @@ from handler.fn import (
 from util.log import log
 
 
-@registerProtocol(pb.pn.protocLogin)
-def protocLoginHandler(context, req, resp):
-    log.debug("HandlerLogin req %s", req)
-    role = GetRoleById(req.role_id)
+@registerProtocol(protocLogin)
+def protocLoginHandler(context):
+    log.debug("HandlerLogin req %s", context.req)
+    role = GetRoleById(context.req.role_id)
     if not role:
-        return Fail(resp, 0)
+        return Fail(context.resp, 0)
     context.role_id = role.role_id
-    role.account = req.account
-    resp.finalAtk = role.age
-    log.debug("HandlerLogin resp %s", resp)
-    return Succ(resp)
+    role.account = context.req.account
+    context.resp.finalAtk = role.age
+    log.debug("HandlerLogin resp %s", context.resp)
+    return Succ(context.resp)
 
 
-@registerProtocol(pb.pn.protocRoleInfo)
-def protocLoginHandler(context, req, resp):
-    log.debug("handlerRoleInfo req %s", req)
+@registerProtocol(protocRoleInfo)
+def protocLoginHandler(context):
+    log.debug("handlerRoleInfo req %s", context.req)
     # time.sleep(random.random())
 
     role = GetRoleByContext(context)
     if not role:
-        return Fail(resp.res, 0)
-    fillRoleInfo(role, resp.role)
+        return Fail(context.resp.res, 0)
+    fillRoleInfo(role, context.resp.role)
 
-    log.debug("handlerRoleInfo resp %s", resp)
-    return Succ(resp.res)
+    log.debug("handlerRoleInfo resp %s", context.resp)
+    return Succ(context.resp.res)
 
 
 def fillRoleInfo(role, resp):

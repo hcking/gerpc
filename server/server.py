@@ -32,12 +32,11 @@ class GameServer(StreamServer):
         super().__init__(address, self.handlerConn)
 
     def handlerConn(self, conn, address):
-        log.debug("handlerConn New  From %s", address)
+        log.info("handlerConn New From %s", address)
         context = getContext(conn, address)
         self.handleContext(context)
-        self.clean(context)
-
-        log.debug("handlerConn Close  From %s", address)
+        log.info("handlerConn Close From %s, %s", address, context.role_id)
+        cleanContext(context)
         return
 
     def startBackDoor(self):
@@ -60,17 +59,16 @@ class GameServer(StreamServer):
         context.channel = Queue()
 
         def sendTask():
-            for _no, _resp, _sid in context.channel:
-                if _resp:
-                    self.messageFunc.writeMsg(context.socket, _no, _resp, sid)
+            for _ in context.channel:
+                self.messageFunc.writeMsg(context.socket, context.no, context.resp, context.sid)
             return
 
-        w = gevent.spawn(sendTask)
+        g_sendTask = gevent.spawn(sendTask)
         isRunning = True
         try:
             while isRunning:
-                no, req, sid = self.messageFunc.readMsg(context.socket)
-                isRunning = onMessage(context, no, req, sid)
+                context.no, context.req, context.sid = self.messageFunc.readMsg(context.socket)
+                isRunning = onMessage(context)
         except ProtocolError as ex:
             errCode = ex.args[0]
             if errCode != 0:
@@ -78,14 +76,14 @@ class GameServer(StreamServer):
         except Exception as ex:
             log.error("handleContext error %s,%s", ex, traceback.format_exc())
         finally:
-            w.kill()
-            del w
+            g_sendTask.kill()
         return
 
-    def clean(self, context):
-        context.socket.shutdown(socket.SHUT_RDWR)
-        context.socket.close()
-        return
+
+def cleanContext(context):
+    context.socket.shutdown(socket.SHUT_RDWR)
+    context.socket.close()
+    return
 
 
 def loadHandlers():
@@ -108,19 +106,17 @@ def checkRules():
     return
 
 
-def onMessage(context, no, req, sid):
+def onMessage(context):
     try:
-        context.no = no
-        context.sid = sid
-        resp = getProtocolResp(no)
-        fn = getProtocFunc(no)
+        context.resp = getProtocolResp(context.no)
+        fn = getProtocFunc(context.no)
         begin_time = time.time()
-        fn(context, req, resp)
+        fn(context)
         use = time.time() - begin_time
-        log.info("onMessage,%s,%s,%s,%s", no, context.role_id, sid, use)
+        log.info("onMessage,%s,%s", context, use)
     except Exception as ex:
-        log.error("onMessage error %s,%s,%s,%s", no, sid, ex, traceback.format_exc())
+        log.error("onMessage error %s,%s,%s", context, ex, traceback.format_exc())
         return False
-    if resp:
-        context.channel.put((no, resp, sid))
+    if context.resp:
+        context.channel.put(1)
     return True

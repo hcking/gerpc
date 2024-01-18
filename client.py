@@ -14,7 +14,7 @@ class Client:
     def __init__(self, address):
         self.address = address
         self.sid = random.randint(1, 999)
-        self.messageFunc = MessageFunc(readIndex=1)
+        self.messageFunc = MessageFunc(isClient=True)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect(self):
@@ -24,7 +24,7 @@ class Client:
         self.sid += 1
         return self.sid
 
-    def reqLogin(self, role_id):
+    def req1(self, role_id):
         no = 1
         req = getProtocolReq(no)
         req.role_id = role_id
@@ -32,15 +32,15 @@ class Client:
         resp = self.requestAndWait(no, req)
         return resp
 
-    def reqRoleInfo(self):
+    def req2(self):
         no = 2
         req = getProtocolReq(no)
         resp = self.requestAndWait(no, req)
         return resp
 
-    def reqDictInfo(self):
+    def req3(self):
         no = 3
-        req = getProtocolReq(3)
+        req = getProtocolReq(no)
         req['name'] = "tzz"
         req['req_id'] = 999
         resp = self.requestAndWait(no, req)
@@ -48,9 +48,9 @@ class Client:
 
     def requestAndWait(self, no, req):
         sid = self.getSid()
-        print('requestAndWait send', no, sid)
+        # print('requestAndWait send', no, sid)
         self.messageFunc.writeMsg(self.socket, no, req, sid)
-        _, resp, sid = self.messageFunc.readMsg(self.socket)
+        no, resp, sid = self.messageFunc.readMsg(self.socket)
         # print('requestAndWait recv', no, sid, type(resp))
         return resp
 
@@ -64,11 +64,11 @@ def main():
     c.connect()
 
     role_id = getRoleId()
-    c.reqLogin(role_id)
-    c.reqRoleInfo()
-    # c.reqRoleInfo()
-    # c.reqRoleInfo()
-    c.reqDictInfo()
+    # print(c.req1(role_id))
+    # print(c.req2())
+    resp = c.req3()
+    resp = c.req3()
+    print(resp)
 
     c.close()
     return

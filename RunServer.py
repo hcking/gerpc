@@ -1,17 +1,18 @@
 # coding=utf-8
 import traceback
 
-from gevent.monkey import patch_all
+from gevent import monkey
+
 from config import configure
 from server.server import GameServer
 from util.log import log
 
+monkey.patch_all()
+
 
 def main():
-    patch_all()
-
     address = configure['address']
-    gs = GameServer(address)
+    gs = GameServer(address, backdoor=False)
     gs.start()
     log.warning("SystemStart on %s", address)
     print("SystemStart on %s", address)

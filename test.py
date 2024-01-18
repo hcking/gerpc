@@ -1,3 +1,5 @@
+import random
+
 from client import Client, getRoleId
 
 from config import configure
@@ -28,13 +30,13 @@ def doWork():
 
 def doit(c):
     while True:
-        # gevent.sleep(random.random())
+        gevent.sleep(random.random())
         role_id = getRoleId()
-        c.reqLogin(role_id)
-        c.reqRoleInfo()
-        c.reqRoleInfo()
-        c.reqRoleInfo()
-        c.reqDictInfo()
+        c.req1(role_id)
+        c.req2()
+        c.req2()
+        c.req3()
+        # break
 
 
 def main():
