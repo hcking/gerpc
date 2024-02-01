@@ -2,8 +2,7 @@
 
 
 import pymysql
-
-from dbconfig import dbconfig
+from configure import dbconfig
 
 _g_connect = None
 
@@ -13,12 +12,12 @@ def getConn():
     if _g_connect:
         return _g_connect
 
-    _g_connect = MyConnect()
+    _g_connect = MyConnect(dbconfig)
     return _g_connect
 
 
 class MyConnect(object):
-    def __init__(self):
+    def __init__(self, dbconfig):
         self.connect = pymysql.connect(**dbconfig)
         self.connect.connect()
 

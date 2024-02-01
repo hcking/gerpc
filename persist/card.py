@@ -88,36 +88,73 @@ _SD_ROLE_PD = Descriptor(
     ],
 )
 
+_SD_MAIL_LIST_PD = Descriptor(
+    name='_mail_list_',
+    tbl='mail_list',
+    writeable=True,
+    fieldList=[
+        FieldDescriptor(
+            name='mail_id',
+            kind='bigint unsigned not null',
+            default=0,
+        ),
+        FieldDescriptor(
+            name='type',
+            kind='int not null',
+            default=0,
+        ),
+        FieldDescriptor(
+            name='content',
+            kind='varchar(128)',
+            default="",
+        ),
+        FieldDescriptor(
+            name='sender_roleid',
+            kind='bigint unsigned',
+            default=0,
+        ),
+        FieldDescriptor(
+            name='receiver_number',
+            kind='int unsigned not null',
+            default=0,
+        ),
+        FieldDescriptor(
+            name='stime',
+            kind='int unsigned not null',
+            default=0,
+        ),
+        FieldDescriptor(
+            name='send_serverid',
+            kind='int unsigned not null',
+            default=0,
+        ),
+    ],
+    indexList=[
+        HashIndex(
+            cols=('mail_id',),
+            unique=True,
+            pk=True,
+            auto=True,
+        ),
+    ],
+)
+
 
 class Role(DataBase, metaclass=DataMeta):
     descriptor = _SD_ROLE_PD
 
 
+class Role_MailList(DataBase, metaclass=DataMeta):
+    descriptor = _SD_MAIL_LIST_PD
+
+
 LoadAllList = [
     Role,
+    Role_MailList,
 ]
 
 
-def load_card(conn):
+def load_LoadAllList(conn):
     for tab in LoadAllList:
-        tab.config(conn)
         tab.load(conn)
-
-
-def main():
-    from db import getConn
-    conn = getConn()
-    # Role.load(conn, lv=230)
-    Role.load(conn, role_id=204680010)
-    Role.load(conn, role_id=204750010)
-    Role.load(conn, role_id=204700010)
-    Role.load(conn, role_id=204710010)
-
-    role1 = Role.Role_Id_Idx(role_id=204680010)
-    print(role1.role_id, role1.name, role1.lv, role1)
-    role1.lv = 20
     return
-
-
-if __name__ == '__main__':
-    main()

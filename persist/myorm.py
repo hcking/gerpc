@@ -6,18 +6,21 @@ from datetime import datetime
 WriteableClass = {}
 
 
-def traceDelete(*args):
-    print('traceDelete', args)
+def traceDelete(tbl, pkVal):
+    s = "|".join([tbl, str(pkVal)])
+    print('traceDelete|' + s)
     return
 
 
-def traceChange(*args):
-    print('traceChange', args)
+def traceChange(tbl, pkVal, attrName, old, new):
+    s = "|".join([tbl, str(pkVal), attrName, str(old), str(new)])
+    print('traceChange|' + s)
     return
 
 
-def traceNew(*args):
-    print('traceNew', args)
+def traceNew(tbl, fields):
+    s = '|'.join([tbl, str(fields)])
+    print('traceNew|' + s)
     return
 
 
@@ -50,7 +53,7 @@ class HashIndex(object):
         'data',
         'fields',
         'colsIndex',
-        'idxName',
+        'indexName',
     ]
 
     def __init__(self, cols, name=None, unique=False, pk=False, auto=False):
@@ -66,7 +69,7 @@ class HashIndex(object):
         self.data = {}
         self.fields = None
         self.colsIndex = None
-        self.idxName = self.name.title()  # indexMethod name
+        self.indexName = self.name.title()  # indexMethod name
 
     def __str__(self):
         return '<%s %s>' % (self.__class__.__name__, self.cols)
@@ -111,7 +114,8 @@ class HashIndex(object):
         return res
 
     def __call__(self, **kwargs):
-        return self.get(**kwargs)
+        # return self.get(**kwargs)
+        raise NotImplemented
 
 
 class Descriptor(object):
@@ -198,32 +202,32 @@ class DataMeta(type):
 
 
 class DataBase(object):
+    # common
+    _incrementStep = 0
+    _incrementSuffix = 0
+
+    # private single table
     descriptor = None
-    all = set()
-    allIdx = []
+
+    indexMap = None
+    autoIndex = None
+    autoIncrementValue = None
+    size = None
+    all = None
     dataClass = None
     isConfig = False
-    subclassCount = 0
 
-    # fix
-    _incrementStep = 1
-    _incrementSuffix = 0
-    _autoIncrementValue = 0
-    size = 0
+    sql_delete = None
+    sql_update = None
+    sql_select = None
+    sql_create = None
+    sql_insert = None
 
-    # sql
-    sql_delete = ""
-    sql_update = ""
-    sql_select = ""
-    sql_create = ""
-    sql_insert = ""
-
-    # record change
-    record_delete_set = set()
-    record_update_set = set()
-    record_insert_set = set()
-    record_pk = set()
-    record_pk_delete = set()
+    record_delete_set = None
+    record_update_set = None
+    record_insert_set = None
+    record_pk = None
+    record_pk_delete = None
 
     def __init__(self):
         raise Exception(self.__class__.__name__, "cannot __init__")
@@ -231,8 +235,29 @@ class DataBase(object):
     def __new__(cls, *args, **kwargs):
         raise Exception(cls.__name__, "cannot __new__")
 
+    def __call__(self, *args, **kwargs):
+        pass
+
     @classmethod
-    def new(cls, fields, _doTrace=True):
+    def get(cls, indexName, **kwargs):
+        if indexName not in cls.indexMap:
+            raise ValueError(indexName, "not index allIndexName:", cls.indexMap.keys())
+        return cls.indexMap[indexName].get(**kwargs)
+
+    @classmethod
+    def getIndexName(cls):
+        return cls.indexMap.keys() if cls.indexMap else None
+
+    @classmethod
+    def getAll(cls):
+        return cls.all
+
+    @classmethod
+    def new(cls, **kwargs):
+        pass
+
+    @classmethod
+    def _new(cls, fields, _doTrace=True):
         if not fields:
             raise Exception(cls.__name__, "not fields")
 
@@ -242,26 +267,23 @@ class DataBase(object):
         # check type
         for fd in descriptor.fieldList:
             val = fields[fd.idx]
-            if type(fd.default) is not type(val):
+            if not isinstance(val, type(fd.default)):
                 raise TypeError(descriptor, fd, fd.default, val)
 
         # check idx
-        ais = [i for i in descriptor.indexList if i.autoIncrement]
-        assert len(ais) <= 1, 'Multiple auto increment columns in "%s".' % cls.__name__
-        if len(ais) == 1:
-            if cls._autoIncrementValue <= 0:
-                cls._autoIncrementValue = cls._incrementSuffix
+        if cls.autoIndex:
+            if cls.autoIncrementValue <= 0:
+                cls.autoIncrementValue = DataBase._incrementSuffix
             else:
-                cls.fixAutoIncrementValue(cls._autoIncrementValue)
-            name = ais[0].cols[0]
+                cls.fixAutoIncrementValue(cls.autoIncrementValue)
+            name = cls.autoIndex.cols[0]
             aiFieldDescriptor = descriptor.fieldsName[name]
             colIdx = aiFieldDescriptor.idx
-            DataBase.subclassCount += 1
-            step = cls._incrementStep
+            step = DataBase._incrementStep
             idxVal = fields[colIdx]
             if not idxVal:
-                cls._autoIncrementValue += step
-                fields[colIdx] = cls._autoIncrementValue
+                cls.autoIncrementValue += step
+                fields[colIdx] = cls.autoIncrementValue
             else:
                 cls.fixAutoIncrementValue(idxVal)
 
@@ -274,12 +296,12 @@ class DataBase(object):
 
         writeable = descriptor.writeable
         if writeable:
-            cls.record_pk.add(primaryKey(cls, fields))
-        if writeable and _doTrace:
+            cls.record_pk.add(obj.getPrimaryValue())
+        if _doTrace and writeable:
             cls.record_insert_set.add(obj)
             cls.size += 1
-            traceNew(cls, fields)
-        return
+            traceNew(cls.descriptor.tbl, fields)
+        return obj
 
     @classmethod
     def setAutoIncrementSuffix(cls, suffix, suffixLength=4, radix=10):
@@ -294,14 +316,14 @@ class DataBase(object):
     def fixAutoIncrementValue(cls, value):
         if not value:
             return
-        if value < cls._autoIncrementValue:
+        if value < cls.autoIncrementValue:
             return
 
-        q, r = divmod(value, cls._incrementStep)
-        if r == cls._incrementSuffix:
-            cls._autoIncrementValue = value
+        q, r = divmod(value, DataBase._incrementStep)
+        if r == DataBase._incrementSuffix:
+            cls.autoIncrementValue = value
         else:
-            cls._autoIncrementValue = q * cls._incrementStep + cls._incrementSuffix
+            cls.autoIncrementValue = q * DataBase._incrementStep + DataBase._incrementSuffix
         return
 
     @classmethod
@@ -310,17 +332,14 @@ class DataBase(object):
             return
 
         descriptor = cls.descriptor
-
         if not descriptor:
             raise TypeError("config not descriptor", descriptor)
 
-        # if cls._autoIncrementValue <= 0:
-        #     raise ValueError("config _autoIncrementValue error", cls)
+        if cls.autoIndex:
+            auto = conn.getAutoIncrement(descriptor.tbl)
+            assert auto is not None, 'table %s: no auto_increment key' % descriptor.tbl
+            cls.fixAutoIncrementValue(auto)
 
-        auto = conn.getAutoIncrement(descriptor.tbl)
-        assert auto is not None, 'table %s: no auto_increment key' % descriptor.tbl
-
-        cls.fixAutoIncrementValue(auto)
         sql = 'select count(*) from {};'.format(descriptor.tbl)
         count = conn.query(sql)[0][0]
         if not count:
@@ -335,7 +354,6 @@ class DataBase(object):
         cls.config(conn)
 
         kw = kwargs
-        descriptor = cls.descriptor
         kvs = [(k, v) for k, v in kw.items() if not isinstance(v, set)]
         values = ['`%s`=%s' % (k, escape(v)) for k, v in kvs]
         kvs = [(k, v) for k, v in kw.items() if isinstance(v, set)]
@@ -343,19 +361,19 @@ class DataBase(object):
         _sql = [sql_condition] if sql_condition != '' else []
         condition = ' and '.join(values + sets + _sql)
         _sql_select = cls.sql_select + (' where ' + condition if len(condition) != 0 else '')
-        rs = conn.query(_sql_select)
-        for r in rs:
-            if descriptor.writeable:
-                pk = primaryKey(cls, r)
-                if pk not in cls.record_pk and pk not in cls.record_pk_delete:
-                    cls.new(r, _doTrace=False)
-            else:
-                _r = list(r)
-                for i, v in enumerate(_r):
-                    dec = descriptor.fieldList[i].decode
-                    if dec is not None:
-                        _r[i] = dec(v)
-                cls.new(_r, _doTrace=False)
+        res = conn.query(_sql_select)
+        for fields in res:
+            cls._new(fields, _doTrace=False)
+            # if descriptor.writeable:
+            #     pk = primaryKey(cls, fields)
+            #     if pk not in cls.record_pk and pk not in cls.record_pk_delete:
+            # else:
+            #     _r = list(fields)
+            #     for i, v in enumerate(_r):
+            #         dec = descriptor.fieldList[i].decode
+            #         if dec is not None:
+            #             _r[i] = dec(v)
+            #     cls.new(_r, _doTrace=False)
         return
 
     @classmethod
@@ -397,9 +415,9 @@ class DataBase(object):
     def initIndexMethod(cls):
         descriptor = cls.descriptor
         for index in descriptor.indexList:
-            idxName = index.idxName
-            assert not hasattr(cls, idxName), 'Index name "%s" duplication.' % idxName
-            setattr(cls, idxName, index)
+            if index.indexName in cls.indexMap:
+                raise TypeError('Index name "%s" duplication.' % index.indexName)
+            cls.indexMap[index.indexName] = index
         return
 
     @classmethod
@@ -409,10 +427,30 @@ class DataBase(object):
     @classmethod
     def initAll(cls):
         if not cls.descriptor:
-            raise Exception("initAll need descriptor", cls.__name__, cls.__class__)
+            raise Exception("need descriptor", cls.__name__, cls.__class__)
+        cls.initAttr()
         cls.initSql()
         cls.initIndexMethod()
         cls.initDataClass()
+        return
+
+    @classmethod
+    def initAttr(cls):
+        autoIndex = [i for i in cls.descriptor.indexList if i.autoIncrement]
+        if len(autoIndex) > 1:
+            raise TypeError('Multiple auto increment columns in "%s".' % cls.__name__)
+
+        cls.indexMap = {}
+        cls.autoIndex = autoIndex[0] if autoIndex else None
+        cls.autoIncrementValue = 0
+        cls.size = 0
+
+        cls.all = set()
+        cls.record_delete_set = set()
+        cls.record_update_set = set()
+        cls.record_insert_set = set()
+        cls.record_pk = set()
+        cls.record_pk_delete = set()
         return
 
     @classmethod
@@ -429,7 +467,7 @@ class DataBase(object):
                     addProperty(cls, field, descriptor)
                 super().__init__(name, bases, attrs)
 
-        class Data(metaclass=PropertyMeta):
+        class Data(object, metaclass=PropertyMeta):
             __slots__ = ['cls', 'fields', 'fmt']
 
             def __init__(self, fields):
@@ -438,7 +476,7 @@ class DataBase(object):
                 self.fmt = '\n'.join(['  %s: %%s' % field.name for field in self.cls.descriptor.fieldList])
 
             def __str__(self):
-                return '<%s %s>' % (self.__class__.__name__, self.cls.descriptor.tbl)
+                return '<%s %s %s>' % (self.__class__.__name__, self.cls.descriptor.tbl, self.fields[0])
 
             def __repr__(self):
                 return self.__str__()
@@ -447,11 +485,11 @@ class DataBase(object):
                 writeable = self.cls.descriptor.writeable
                 self.cls.all.discard(self)
                 self.cls.record_delete_set.add(self)
-                self.cls.record_pk.discard(primaryKey(cls, self.fields))
-                self.cls.record_pk_delete.add(primaryKey(cls, self.fields))
+                self.cls.record_pk.discard(self.getPrimaryValue())
+                self.cls.record_pk_delete.add(self.getPrimaryValue())
                 self.cls.size -= 1
                 if writeable:
-                    traceDelete('111', self.toString())
+                    traceDelete(self.cls.descriptor.tbl, self.getPrimaryValue())
                 del self
                 return
 
@@ -462,6 +500,10 @@ class DataBase(object):
             def setChanged(self):
                 self.cls.record_update_set.add(self)
                 return
+
+            def getPrimaryValue(self):
+                tupKey = tuple([self.fields[i] for i in self.cls.descriptor.primaryIndex.colsIndex])
+                return tupKey
 
         cls.dataClass = Data
         return
@@ -477,25 +519,31 @@ def addProperty(cls, field, descriptor):
         setter = cls.readonly()
     else:
         def setter(obj, value):
-            if type(field.default) is not type(value):
-                raise TypeError(field, "default type error", field.default, value)
+            if not isinstance(value, type(field.default)):
+                raise TypeError(field, field.default, value)
 
-            beforeVal = obj.fields[idx]
-            if beforeVal == value:
+            if obj.fields[idx] == value:
                 return
             if field.name in descriptor.primaryIndex.cols:
-                raise Exception("Can't modify primary key")
+                raise TypeError("Can't modify primary key")
 
             for index in affectIndexList:
                 index.removeObj(obj)
 
+            beforeVal = obj.fields[idx]
             obj.fields[idx] = value
 
             for index in affectIndexList:
                 index.addObj(obj)
 
             obj.setChanged()
-            traceChange(obj.fields, beforeVal, value)
+            traceChange(
+                obj.cls.descriptor.tbl,
+                obj.getPrimaryValue(),
+                field.name,
+                beforeVal,
+                value,
+            )
             return
 
     def getter(obj):
@@ -515,8 +563,3 @@ def escape(v):
     if type(v) is datetime:
         return "'%s'" % v.strftime('%Y-%m-%d %H:%M:%S')
     return '%s' % v
-
-
-def primaryKey(cls, row):
-    tupKey = tuple([row[i] for i in cls.descriptor.primaryIndex.colsIndex])
-    return tupKey
