@@ -2,6 +2,7 @@
 
 
 <p align="center">
+    Card GameServer from gevent
     卡牌游戏服务器框架 
 </p>
 
@@ -11,8 +12,8 @@
 
 - **handler**: 注册处理定义协议的函数
 - **pb**: 自定义协议 生成protobuf文件
-- **persist**: 数据库读写数据orm # todo
-- **timer**: 自定义定时器 # todo
+- **persist**: 数据库读写数据 orm持久化
+- **timer**: 定时器
 - **server**: GameServer服务器类 接收发送消息规则
 
 ## 组件说明
