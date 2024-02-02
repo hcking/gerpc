@@ -1,15 +1,17 @@
 # coding=utf8
 
-from myorm import (
+from catty import (
     Descriptor,
     FieldDescriptor,
     HashIndex,
-    DataBase,
-    DataMeta,
+    Increment,
+    CattyBase,
+    CattyMeta,
 )
 
+# from config import autoIncrementSuffix
 autoIncrementSuffix = 10
-DataBase.setAutoIncrementSuffix(autoIncrementSuffix)
+Increment.setAutoIncrementSuffix(autoIncrementSuffix)
 
 _SD_ROLE_PD = Descriptor(
     name='roles',
@@ -140,11 +142,11 @@ _SD_MAIL_LIST_PD = Descriptor(
 )
 
 
-class Role(DataBase, metaclass=DataMeta):
+class Role(CattyBase, metaclass=CattyMeta):
     descriptor = _SD_ROLE_PD
 
 
-class Role_MailList(DataBase, metaclass=DataMeta):
+class Role_MailList(CattyBase, metaclass=CattyMeta):
     descriptor = _SD_MAIL_LIST_PD
 
 
