@@ -163,7 +163,7 @@ class HashIndex:
         return
 
     def _getIndex(self, obj):
-        values = obj.getValueByIndexList(self.colsIndex)
+        values = obj._getValueByIndexList(self.colsIndex)
         index = HashIndexBase(values)
         return index
 
@@ -294,7 +294,7 @@ class CattyBase:
         return cls._indexMap.keys() if cls._indexMap else None
 
     @classmethod
-    def getAll(cls):
+    def all(cls):
         return cls._all
 
     @classmethod
@@ -341,7 +341,7 @@ class CattyBase:
 
         writeable = descriptor.writeable
         if writeable:
-            cls._record_pk.add(obj.getPrimaryValue())
+            cls._record_pk.add(obj._getPrimaryValue())
             if _doTrace:
                 cls._record_insert.add(obj)
                 cls._size += 1
@@ -349,10 +349,10 @@ class CattyBase:
         return obj
 
     @classmethod
-    def removeObj(cls, obj):
+    def _removeObj(cls, obj):
         cls._all.discard(obj)
         cls._record_delete.add(obj)
-        pkVal = obj.getPrimaryValue()
+        pkVal = obj._getPrimaryValue()
         cls._record_pk.discard(pkVal)
         cls._record_pk_delete.add(pkVal)
         cls._size -= 1
@@ -365,11 +365,11 @@ class CattyBase:
         return
 
     @classmethod
-    def changeObj(cls, obj, beforeVal, value, field):
+    def _changeObj(cls, obj, beforeVal, value, field):
         cls._record_update.add(obj)
         Trace.traceChange(
             tbl=cls.descriptor.tbl,
-            pkVal=obj.getPrimaryValue(),
+            pkVal=obj._getPrimaryValue(),
             attrName=field.name,
             old=beforeVal,
             new=value,
@@ -479,15 +479,6 @@ class CattyBase:
         return
 
     @classmethod
-    def _initIndexMethod(cls):
-        descriptor = cls.descriptor
-        for index in descriptor.indexList:
-            if index.indexName in cls._indexMap:
-                raise Exception('Index name "%s" duplication.' % index.indexName)
-            cls._indexMap[index.indexName] = index
-        return
-
-    @classmethod
     def _initAllByDescriptor(cls):
         if not cls.descriptor:
             raise Exception("need descriptor", cls.__name__, cls.__class__)
@@ -495,6 +486,15 @@ class CattyBase:
         cls._initSql()
         cls._initIndexMethod()
         cls._initDataClass()
+        return
+
+    @classmethod
+    def _initIndexMethod(cls):
+        descriptor = cls.descriptor
+        for index in descriptor.indexList:
+            if index.indexName in cls._indexMap:
+                raise Exception('Index name "%s" duplication.' % index.indexName)
+            cls._indexMap[index.indexName] = index
         return
 
     @classmethod
@@ -545,7 +545,7 @@ class CattyBase:
                 return self.__str__()
 
             def remove(self):
-                self._cls.removeObj(self)
+                self._cls._removeObj(self)
                 del self
                 return
 
@@ -553,20 +553,20 @@ class CattyBase:
                 s = ('{\n' + (self._fmt % tuple(self._fields)) + '\n}\n')
                 return s
 
-            def getPrimaryValue(self):
+            def _getPrimaryValue(self):
                 tupKey = tuple([self._fields[i] for i in self._cls.descriptor.primaryIndex.colsIndex])
                 return tupKey
 
-            def getValueByIndexList(self, colsIndex):
+            def _getValueByIndexList(self, colsIndex):
                 return [self._fields[idx] for idx in colsIndex]
 
-            def getValueByIndex(self, idx):
+            def _getValueByIndex(self, idx):
                 return self._fields[idx]
 
-            def setValueByIndex(self, idx, value, field):
+            def _setValueByIndex(self, idx, value, field):
                 beforeVal = self._fields[idx]
                 self._fields[idx] = value
-                self._cls.changeObj(self, beforeVal, value, field)
+                self._cls._changeObj(self, beforeVal, value, field)
                 return
 
         cls._dataClass = Data
@@ -587,7 +587,7 @@ def _addProperty(cls, field, descriptor):
             if not isinstance(value, type(field.default)):
                 raise TypeError(field, field.default, value)
 
-            if obj.getValueByIndex(idx) == value:
+            if obj._getValueByIndex(idx) == value:
                 return
 
             if field.name in descriptor.primaryIndex.cols:
@@ -596,7 +596,7 @@ def _addProperty(cls, field, descriptor):
             for index in affectIndexList:
                 index.removeObj(obj)
 
-            obj.setValueByIndex(idx, value, field)
+            obj._setValueByIndex(idx, value, field)
 
             for index in affectIndexList:
                 index.addObj(obj)
@@ -605,7 +605,7 @@ def _addProperty(cls, field, descriptor):
         setter = readonly
 
     def getter(obj):
-        return obj.getValueByIndex(idx)
+        return obj._getValueByIndex(idx)
 
     setattr(cls, field.name, property(getter, setter))
     return

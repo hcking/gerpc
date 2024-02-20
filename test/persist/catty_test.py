@@ -4,7 +4,7 @@ import time
 import unittest
 import pymysql
 
-from card import (
+from persist.card import (
     Role,
     Role_MailList,
 )
@@ -78,14 +78,18 @@ class CattyTest(unittest.TestCase):
             mail_id=0,
             type=1,
             content="test",
-            sender_roleid=0,
-            receiver_number=0,
             stime=nowTime,
-            send_serverid=0,
         )
         self.assertTrue(m)
+        self.assertTrue(m.mail_id > 0)
         self.assertEqual(m.type, 1)
         self.assertEqual(m.stime, nowTime)
+        self.assertEqual(m.sender_roleid, 0)
+
+        with self.assertRaises(AttributeError):
+            m._unknown = 1
+
+        print(dir(m))
         return
 
     def test_other(self):

@@ -1,6 +1,6 @@
 # coding=utf8
 
-from catty import (
+from persist.catty import (
     Descriptor,
     FieldDescriptor,
     HashIndex,
