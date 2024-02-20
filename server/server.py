@@ -1,12 +1,17 @@
 """
 gevent GameServer
 """
+from gevent import monkey
+
+if True:  # fuck pep8
+    monkey.patch_all()
 
 import time
 import os
 import socket
 import traceback
 import gevent
+
 from gevent.server import StreamServer
 from gevent.backdoor import BackdoorServer
 from gevent.queue import Queue

@@ -1,13 +1,9 @@
 # coding=utf-8
 import traceback
 
-from gevent import monkey
-
 from config import configure
 from server.server import GameServer
 from util.log import log
-
-monkey.patch_all()
 
 
 def main():

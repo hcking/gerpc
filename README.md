@@ -25,10 +25,6 @@
 ## 使用说明
 
 ```commandline
-cd pb; python genpn.py # 编译生成 protobuf 文件 自定义协议i文件
-
-python RunServer.py # 启动游戏服务器
-
-python client.py # 启动客户端 向服务器发送请求协议
- 
+cd pb; python genpn.py; cd .. # 编译生成 protobuf 文件 自定义协议i文件
+python RunServer.py # 启动游戏服务器 
 ```

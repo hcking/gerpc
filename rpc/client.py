@@ -64,9 +64,8 @@ def main():
     c.connect()
 
     role_id = getRoleId()
-    # print(c.req1(role_id))
-    # print(c.req2())
-    resp = c.req3()
+    print(c.req1(role_id))
+    print(c.req2())
     resp = c.req3()
     print(resp)
 
