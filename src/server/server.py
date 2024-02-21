@@ -1,10 +1,7 @@
 """
 gevent GameServer
 """
-from gevent import monkey
-
-if True:  # fuck pep8
-    monkey.patch_all()
+from gevent import monkey; monkey.patch_all()
 
 import time
 import os
