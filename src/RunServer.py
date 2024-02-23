@@ -8,7 +8,7 @@ import signal
 from configure import Configure
 from server.server import GameServer
 from util.log import log
-from handler.h_constant import Constant
+from cache.constant import Constant
 
 _isExit = False
 

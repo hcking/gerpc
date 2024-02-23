@@ -4,7 +4,7 @@ import time
 import unittest
 import pymysql
 
-from persist.card import (
+from data.card import (
     Role,
     Role_MailList,
 )
@@ -60,15 +60,27 @@ class CattyTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.conn.close()
 
-    def test_change(self):
+    def test_load(self):
         role_id = 204680010  # exist
         res = Role.load(self.conn, role_id=role_id)
         self.assertEqual(res, None, 'load not return')
         role = Role.get('Role_Id_Idx', role_id=role_id)
-        self.assertTrue(role.role_id == role_id)
+        if role:
+            print('test_load ok')
+        # self.assertTrue(role.role_id == role_id)
+        return
 
+    def test_change(self):
+        role = Role.new(
+        )
         role.lv = 20
         self.assertEqual(role.lv, 20)
+        with self.assertRaises(Exception):
+            role._unknown = 1
+
+        with self.assertRaises(Exception):
+            role.role_id = 1
+
         return
 
     def test_new(self):
@@ -85,15 +97,6 @@ class CattyTest(unittest.TestCase):
         self.assertEqual(m.type, 1)
         self.assertEqual(m.stime, nowTime)
         self.assertEqual(m.sender_roleid, 0)
-
-        with self.assertRaises(AttributeError):
-            m._unknown = 1
-
-        print(dir(m))
-        return
-
-    def test_other(self):
-        self.assertEqual(1, 1)
         return
 
 

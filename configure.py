@@ -15,3 +15,4 @@ class Configure:
     address = ("127.0.0.1", 11)
     logPath = 'log/server.log'
     logLevel = INFO
+    backdoor = False
