@@ -56,7 +56,7 @@ def registerProtocol(no):
 """
 
 ProtocFileCsv = 'game.csv'
-toFileName = 'pn.py'
+toFileName = os.path.join('..', 'src', 'pb', 'pn.py')
 
 protoNoMap = OrderedDict()
 protocolNoMapStr = ""
@@ -124,7 +124,7 @@ def doCache():
 
 
 def makeProtobuf():
-    cmd = 'protoc3.exe --python_out=. xx.proto'
+    cmd = 'protoc3.exe --python_out=../src/pb xx.proto'
     res = os.system(cmd)
     if res:
         raise ValueError(res)

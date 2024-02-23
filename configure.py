@@ -10,8 +10,8 @@ INFO = 20
 DEBUG = 10
 NOTSET = 0
 
-configure = {
-    "address": ("127.0.0.1", 11),
-    "logPath": 'log/server.log',
-    "logLevel": INFO,
-}
+
+class Configure:
+    address = ("127.0.0.1", 11)
+    logPath = 'log/server.log'
+    logLevel = INFO

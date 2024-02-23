@@ -1,13 +1,13 @@
 # coding=utf-8
 import traceback
 
-from config import configure
+from configure import Configure
 from server.server import GameServer
 from util.log import log
 
 
 def main():
-    address = configure['address']
+    address = Configure.address
     gs = GameServer(address, backdoor=False)
     gs.start()
     log.warning("SystemStart on %s", address)
