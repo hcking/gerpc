@@ -156,7 +156,7 @@ LoadAllList = [
 ]
 
 
-def load_LoadAllList(conn):
+def loadFromLoadAllList(conn):
     for tab in LoadAllList:
         tab.load(conn)
     return

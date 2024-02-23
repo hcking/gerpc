@@ -21,6 +21,12 @@ from pb.pn import ruleMap, getProtocFunc, getProtocolResp
 from util.log import log
 
 
+def _load_data():
+    from data.card import loadFromLoadAllList
+    load_LoadAllList()
+    return
+
+
 class GameServer(StreamServer):
     def __init__(self, address, backdoor=True):
         self.address = address
@@ -28,10 +34,11 @@ class GameServer(StreamServer):
         self.backDoorPort = self.port + 1
 
         self.messageFunc = MessageFunc()
-        self.sid = 1
         self.backdoor = backdoor
 
         super().__init__(address, self.handlerConn)
+        _load_data()
+        return
 
     def handlerConn(self, conn, address):
         log.info("handlerConn New From %s", address)
@@ -65,7 +72,7 @@ class GameServer(StreamServer):
                 self.messageFunc.writeMsg(context.socket, context.no, context.resp, context.sid)
             return
 
-        g_sendTask = gevent.spawn(sendTask)
+        gSendTask = gevent.spawn(sendTask)
         isRunning = True
         try:
             while isRunning:
@@ -78,7 +85,7 @@ class GameServer(StreamServer):
         except Exception as ex:
             log.error("handleContext error %s,%s", ex, traceback.format_exc())
         finally:
-            g_sendTask.kill()
+            gSendTask.kill()
         return
 
 
@@ -99,6 +106,7 @@ def loadHandlers():
     if handlers:
         dummy = __import__(handler.__name__, globals(), locals(), handlers)
     checkRules()
+    return
 
 
 def checkRules():
