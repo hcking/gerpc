@@ -10,11 +10,10 @@
 
 ## 目录说明
 
-- **handler**: 注册处理定义协议的函数
-- **pb**: 自定义协议 生成protobuf文件
-- **persist**: 数据库读写数据 orm持久化
-- **timer**: 定时器
-- **server**: GameServer服务器类 接收发送消息规则
+- **src/server**: GameServer服务器类 接收发送消息规则
+- **src/persist**: 数据库读写数据 orm持久化
+- **src/handler**: 注册处理定义协议的函数
+- **src/proto**: 生成目录
 
 ## 组件说明
 
@@ -25,6 +24,6 @@
 ## 使用说明
 
 ```commandline
-cd pb; python genpn.py; cd .. # 编译生成 protobuf 文件 自定义协议i文件
-python RunServer.py # 启动游戏服务器 
+python make.py # 编译生成 protobuf 文件 自定义协议i文件
+cd src; python RunServer.py # 启动游戏服务器 
 ```
