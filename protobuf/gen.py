@@ -4,11 +4,17 @@ import os
 import datetime
 from collections import OrderedDict
 
+ProtocFileCsv = 'game.csv'
+toFileName = os.path.join('..', 'src', 'proto', 'pn.py')
+
+protoNoMap = OrderedDict()
+protocolNoMapStr = ""
+
 codeStr = """# coding=utf8
 # Generated file time {nowTime} DO NOT EDIT!
 
 import json
-from pb import xx_pb2
+from proto import xx_pb2
 
 
 {protoDefineStr}
@@ -55,16 +61,10 @@ def registerProtocol(no):
 
 """
 
-ProtocFileCsv = 'game.csv'
-toFileName = os.path.join('..', 'src', 'pb', 'pn.py')
-
-protoNoMap = OrderedDict()
-protocolNoMapStr = ""
-
 
 def doLine(line, lineNo):
     global protocolNoMapStr
-    print(line)
+    # print(line)
     no, protoName, req, resp, pbFile = line.split(',')
     no = int(no)
     pbName = pbFile.split('.')[0]
@@ -123,14 +123,5 @@ def doCache():
     return
 
 
-def makeProtobuf():
-    cmd = 'protoc3.exe --python_out=../src/pb xx.proto'
-    res = os.system(cmd)
-    if res:
-        raise ValueError(res)
-    return
-
-
 if __name__ == '__main__':
-    makeProtobuf()
     doFile()
