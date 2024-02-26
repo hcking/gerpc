@@ -20,4 +20,4 @@ handler.setFormatter(formatter)
 # 将 handler 添加到日志记录器
 logger.addHandler(handler)
 
-log = logger
+getLogger = logging.getLogger

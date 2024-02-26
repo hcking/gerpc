@@ -2,8 +2,10 @@
 import struct
 
 from server.errors import ProtocolError
-from util.log import log
+from util.log import getLogger
 from proto.pn import ruleMap, getProtocolReq, getProtocolResp
+
+log = getLogger(__name__)
 
 PackageMaxLen = 65535
 

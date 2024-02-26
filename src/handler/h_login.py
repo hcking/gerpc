@@ -13,7 +13,8 @@ from handler.fn import (
     GetRoleByContext,
 )
 
-from util.log import log
+from util.log import getLogger
+log = getLogger(__name__)
 
 
 @registerProtocol(protocLogin)

@@ -6,8 +6,10 @@ import signal
 
 from configure import Configure
 from server.server import GameServer
-from util.log import log
+from util.log import getLogger
 from cache import constant
+
+log = getLogger(__name__)
 
 _isExit = False
 

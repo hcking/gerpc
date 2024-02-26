@@ -18,7 +18,9 @@ from server.context import getContext
 from server.errors import ProtocolError
 from proto.pn import ruleMap, getProtocFunc, getProtocolResp
 
-from util.log import log
+from util.log import getLogger
+
+log = getLogger(__name__)
 
 
 class GameServer(StreamServer):
