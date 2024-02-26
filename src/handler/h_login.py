@@ -1,6 +1,6 @@
 # coding=utf8
 
-from pb.pn import (
+from proto.pn import (
     registerProtocol,
     protocLogin,
     protocRoleInfo,

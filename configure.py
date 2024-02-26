@@ -16,3 +16,4 @@ class Configure:
     logPath = 'log/server.log'
     logLevel = INFO
     backdoor = False
+    autoIncrementSuffix = 10

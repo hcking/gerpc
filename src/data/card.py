@@ -9,9 +9,8 @@ from persist.catty import (
     CattyMeta,
 )
 
-# from config import autoIncrementSuffix
-autoIncrementSuffix = 10
-Increment.setAutoIncrementSuffix(autoIncrementSuffix)
+from configure import Configure
+Increment.setAutoIncrementSuffix(Configure.autoIncrementSuffix)
 
 _SD_ROLE_PD = Descriptor(
     name='roles',

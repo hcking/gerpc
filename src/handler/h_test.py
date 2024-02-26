@@ -1,4 +1,4 @@
-from pb.pn import (
+from proto.pn import (
     registerProtocol,
     protocDictTest,
 )

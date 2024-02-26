@@ -3,7 +3,7 @@ import struct
 
 from server.errors import ProtocolError
 from util.log import log
-from pb.pn import ruleMap, getProtocolReq, getProtocolResp
+from proto.pn import ruleMap, getProtocolReq, getProtocolResp
 
 PackageMaxLen = 65535
 

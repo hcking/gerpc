@@ -52,7 +52,7 @@ def remove_pyc_files(directory):
 def clean():
     if os.path.exists(toProtoDir):
         shutil.rmtree(toProtoDir)
-    remove_pyc_files(".")
+    # remove_pyc_files(".")
     return
 
 

@@ -16,7 +16,7 @@ from gevent.queue import Queue
 from server.messageFunc import MessageFunc
 from server.context import getContext
 from server.errors import ProtocolError
-from pb.pn import ruleMap, getProtocFunc, getProtocolResp
+from proto.pn import ruleMap, getProtocFunc, getProtocolResp
 
 from util.log import log
 
