@@ -1,14 +1,13 @@
 # coding=utf-8
 
 
-import sys
 import traceback
 import signal
 
 from configure import Configure
 from server.server import GameServer
 from util.log import log
-from cache.constant import Constant
+from cache import constant
 
 _isExit = False
 
@@ -28,7 +27,7 @@ def systemExit():
     global _isExit
     if _isExit:
         return
-    Constant.gameServer.close()
+    constant.gameServer.close()
     log.warning("SystemExit on %s", Configure.address)
     print("SystemExit on %s", Configure.address)
     _isExit = True
@@ -37,15 +36,17 @@ def systemExit():
 
 def main():
     registerSignal()
-    Constant.gameServer = GameServer(Configure.address, backdoor=Configure.backdoor)
-    Constant.gameServer.start()
+    gs = GameServer(Configure.address, backdoor=Configure.backdoor)
+    constant.gameServer = gs
+    gs.start()
     log.warning("SystemStart on %s", Configure.address)
     print("SystemStart on %s", Configure.address)
     try:
-        Constant.gameServer.serve_forever()
-    except (KeyboardInterrupt, SystemExit):
-        pass
+        gs.serve_forever()
+    except (KeyboardInterrupt, SystemExit) as err:
+        print(err)
     except Exception as ex:
+        print(traceback.format_exc())
         log.error("RunServer error %s,%s", ex, traceback.format_exc())
     finally:
         systemExit()

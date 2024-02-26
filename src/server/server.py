@@ -21,12 +21,6 @@ from pb.pn import ruleMap, getProtocFunc, getProtocolResp
 from util.log import log
 
 
-def _load_data():
-    from data.card import loadFromLoadAllList
-    load_LoadAllList()
-    return
-
-
 class GameServer(StreamServer):
     def __init__(self, address, backdoor=True):
         self.address = address
@@ -37,7 +31,6 @@ class GameServer(StreamServer):
         self.backdoor = backdoor
 
         super().__init__(address, self.handlerConn)
-        _load_data()
         return
 
     def handlerConn(self, conn, address):
