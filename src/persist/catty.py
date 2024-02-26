@@ -1,95 +1,16 @@
 # coding=utf8
 
-
+from collections import OrderedDict
 from datetime import datetime
+from persist.save import Trace, Increment
 
-WriteableClass = {}
+from util.log import getLogger
 
-
-class Trace:
-    _separator = ',,,'
-
-    def __new__(cls, *args, **kwargs):
-        raise NotImplementedError
-
-    @classmethod
-    def traceDelete(cls, tbl, pkVal):
-        s = cls._separator.join([
-            'traceDelete',
-            tbl,
-            str(pkVal),
-        ])
-        cls._record(s)
-        return
-
-    @classmethod
-    def traceChange(cls, tbl, pkVal, attrName, old, new):
-        s = cls._separator.join([
-            'traceChange',
-            tbl,
-            str(pkVal),
-            attrName,
-            str(old),
-            str(new),
-        ])
-        cls._record(s)
-        return
-
-    @classmethod
-    def traceNew(cls, tbl, fields):
-        s = cls._separator.join([
-            'traceNew',
-            tbl,
-            str(fields),
-        ])
-        cls._record(s)
-        return
-
-    @classmethod
-    def _record(cls, s):
-        print(s)
-        return
-
-
-class Increment:
-    _isConfig = False
-    _incrementStep = 0
-    _incrementSuffix = 0
-
-    def __new__(cls, *args, **kwargs):
-        raise NotImplementedError
-
-    @classmethod
-    def setAutoIncrementSuffix(cls, suffix, radix=10, suffixLength=5):
-        suffix = int(suffix)
-        step = int(radix) ** int(suffixLength)
-        assert 0 < suffix < step, '`suffix` is out of range: [%d, %d)' % (1, step)
-        cls._incrementStep = step
-        cls._incrementSuffix = suffix
-        cls._isConfig = True
-        return
-
-    @classmethod
-    def getStep(cls):
-        if not cls._isConfig:
-            cls._raiseNotConfig()
-            return
-        return cls._incrementStep
-
-    @classmethod
-    def getSuffix(cls):
-        if not cls._isConfig:
-            cls._raiseNotConfig()
-            return
-        return cls._incrementSuffix
-
-    @classmethod
-    def _raiseNotConfig(cls):
-        raise Exception("need config")
+log = getLogger(__name__)
 
 
 class HashIndexBase:
-    __slots__ = ['values']
+    __slots__ = ('values',)
 
     def __init__(self, values):
         self.values = tuple(values)
@@ -108,18 +29,16 @@ class HashIndexBase:
 
 
 class HashIndex:
-    __slots__ = [
+    __slots__ = (
         'cols',
         'name',
         'unique',
         'pk',
         'autoIncrement',
         'fields',
-        'colsIndex',
         'indexName',
         '_data',
-
-    ]
+    )
 
     def __init__(self, cols, name=None, unique=False, pk=False, auto=False):
         self.cols = cols
@@ -132,7 +51,6 @@ class HashIndex:
             raise TypeError('Primary key must be unique.')
         self.autoIncrement = auto
         self.fields = None
-        self.colsIndex = None
         self.indexName = self.name.title()  # indexMethod name
         self._data = {}
 
@@ -163,7 +81,7 @@ class HashIndex:
         return
 
     def _getIndex(self, obj):
-        values = obj._getValueByIndexList(self.colsIndex)
+        values = obj.i_getIndex(self.cols)
         index = HashIndexBase(values)
         return index
 
@@ -177,7 +95,7 @@ class HashIndex:
 
 
 class Descriptor:
-    __slots__ = [
+    __slots__ = (
         'name',
         'tbl',
         'fieldList',
@@ -187,7 +105,7 @@ class Descriptor:
         'deletable',
         'primaryIndex',
         'fieldsName'
-    ]
+    )
 
     def __init__(self, name, tbl, fieldList, indexList=None, writeable=False, ordered=False, deletable=False):
         assert isinstance(fieldList, list)
@@ -207,7 +125,6 @@ class Descriptor:
 
         for index in self.indexList:
             index.fields = tuple([self.fieldsName[i] for i in index.cols])
-            index.colsIndex = tuple([i.idx for i in index.fields])
             if index.pk:
                 if self.primaryIndex:
                     raise Exception('Multiply primary key in %s.' % name)
@@ -230,7 +147,7 @@ class Descriptor:
 
 
 class FieldDescriptor:
-    __slots__ = ['name', 'kind', 'default', 'idx']
+    __slots__ = ('name', 'kind', 'default', 'idx')
 
     def __init__(self, name, kind, default):
         self.name = name
@@ -265,7 +182,6 @@ class CattyBase:
     _autoIncrementValue = None
     _size = None
     _all = None
-    _dataClass = None
     _isConfig = False
 
     _sql_delete = None
@@ -303,56 +219,75 @@ class CattyBase:
         if cls._autoIndex:
             if kwargs.get(cls._autoIndex.cols[0], 0) != 0:
                 raise ValueError(cls._autoIndex, 'auto must be 0 or no input')
-        fields = []
-        for field in cls.descriptor.fieldList:
-            fields.append(kwargs.get(field.name, field.default))
-        return cls._newObj(fields, _doTrace=True)
+
+        data = cls._genDataByDict(kwargs)
+        return cls._newObj(data, _doTrace=True)
 
     @classmethod
-    def _newObj(cls, fields, _doTrace=True):
-        if not fields:
-            raise Exception(cls.__name__, "not fields")
-
-        descriptor = cls.descriptor
-        fields = list(fields)
-
+    def _genDataByList(cls, fields):
+        data = OrderedDict()
         # check type
-        for fd in descriptor.fieldList:
-            val = fields[fd.idx]
-            if not isinstance(val, type(fd.default)):
-                raise TypeError(descriptor, fd, fd.default, val)
+        for field in cls.descriptor.fieldList:
+            val = fields[field.idx]
+            cls.i_checkType(val, field)
 
-        # check idx
+            data[field.name] = val
+        return data
+
+    @classmethod
+    def _genDataByDict(cls, kwargs):
+        data = OrderedDict()
+        for field in cls.descriptor.fieldList:
+            if field.name not in kwargs:
+                kwargs[field.name] = field.default
+
+            val = kwargs[field.name]
+            cls.i_checkType(val, field)
+            data[field.name] = val
+        return data
+
+    @classmethod
+    def i_checkType(cls, val, field):
+        if not isinstance(val, type(field.default)):
+            raise TypeError(cls.descriptor, field, field.default, val)
+        return
+
+    @classmethod
+    def _checkIdx(cls, data):
         if cls._autoIndex:
-            colIdx = cls._autoIndex.colsIndex[0]
-            if fields[colIdx]:
-                cls._fixAutoIncrementValue(fields[colIdx])
+            col = cls._autoIndex.cols[0]
+            if data[col]:
+                cls._fixAutoIncrementValue(data[col])
             else:
                 step = Increment.getStep()
                 cls._autoIncrementValue += step
-                fields[colIdx] = cls._autoIncrementValue
+                data[col] = cls._autoIncrementValue
+        return
 
+    @classmethod
+    def _newObj(cls, data, _doTrace=True):
+        cls._checkIdx(data)
         # new data
-        obj = cls._dataClass(cls, fields)
-        for index in descriptor.indexList:
+        obj = Data(cls, data)
+        for index in cls.descriptor.indexList:
             index.addObj(obj)
 
         cls._all.add(obj)
 
-        writeable = descriptor.writeable
+        writeable = cls.descriptor.writeable
         if writeable:
-            cls._record_pk.add(obj._getPrimaryValue())
+            cls._record_pk.add(obj.i_getPrimaryValue())
             if _doTrace:
                 cls._record_insert.add(obj)
                 cls._size += 1
-                Trace.traceNew(cls.descriptor.tbl, fields)
+                Trace.traceNew(cls.descriptor.tbl, list(data.values()))
         return obj
 
     @classmethod
-    def _removeObj(cls, obj):
+    def i_removeObj(cls, obj):
         cls._all.discard(obj)
         cls._record_delete.add(obj)
-        pkVal = obj._getPrimaryValue()
+        pkVal = obj.i_getPrimaryValue()
         cls._record_pk.discard(pkVal)
         cls._record_pk_delete.add(pkVal)
         cls._size -= 1
@@ -365,12 +300,12 @@ class CattyBase:
         return
 
     @classmethod
-    def _changeObj(cls, obj, beforeVal, value, field):
+    def i_changeObj(cls, obj, beforeVal, value, attr):
         cls._record_update.add(obj)
         Trace.traceChange(
             tbl=cls.descriptor.tbl,
-            pkVal=obj._getPrimaryValue(),
-            attrName=field.name,
+            pkVal=obj.i_getPrimaryValue(),
+            attrName=attr,
             old=beforeVal,
             new=value,
         )
@@ -430,7 +365,8 @@ class CattyBase:
         _sql_select = cls._sql_select + (' where ' + condition if len(condition) != 0 else '')
         res = conn.query(_sql_select)
         for fields in res:
-            cls._newObj(fields, _doTrace=False)
+            data = cls._genDataByList(fields)
+            cls._newObj(data, _doTrace=False)
             # if descriptor.writeable:
             #     pk = primaryKey(cls, fields)
             #     if pk not in cls.record_pk and pk not in cls.record_pk_delete:
@@ -485,7 +421,6 @@ class CattyBase:
         cls._initAttr()
         cls._initSql()
         cls._initIndexMethod()
-        cls._initDataClass()
         return
 
     @classmethod
@@ -516,99 +451,58 @@ class CattyBase:
         cls._record_pk_delete = set()
         return
 
-    @classmethod
-    def _initDataClass(cls):
-        descriptor = cls.descriptor
 
-        class PropertyMeta(type):
-            def __new__(cls, name, bases, attrs):
-                new_class = super().__new__(cls, name, bases, attrs)
-                return new_class
+class Data:
+    __slots__ = ('_cls', '_data',)
 
-            def __init__(cls, name, bases, attrs):
-                for field in descriptor.fieldList:
-                    _addProperty(cls, field, descriptor)
-                super().__init__(name, bases, attrs)
+    def __init__(self, cls, data):
+        self._cls = cls
+        self._data = data
 
-        class Data(metaclass=PropertyMeta):
-            __slots__ = ['_cls', '_fields', '_fmt']
+    def __str__(self):
+        return '<Data %s %s >' % (self.__class__.__name__, self._cls.descriptor.tbl)
 
-            def __init__(self, _cls, fields):
-                self._cls = _cls
-                self._fields = fields
-                self._fmt = '\n'.join(['  %s: %%s' % field.name for field in self._cls.descriptor.fieldList])
+    def __repr__(self):
+        return self.__str__()
 
-            def __str__(self):
-                return '<%s %s %s>' % (self.__class__.__name__, self._cls.descriptor.tbl, self._fields[0])
-
-            def __repr__(self):
-                return self.__str__()
-
-            def remove(self):
-                self._cls._removeObj(self)
-                del self
-                return
-
-            def toString(self):
-                s = ('{\n' + (self._fmt % tuple(self._fields)) + '\n}\n')
-                return s
-
-            def _getPrimaryValue(self):
-                tupKey = tuple([self._fields[i] for i in self._cls.descriptor.primaryIndex.colsIndex])
-                return tupKey
-
-            def _getValueByIndexList(self, colsIndex):
-                return [self._fields[idx] for idx in colsIndex]
-
-            def _getValueByIndex(self, idx):
-                return self._fields[idx]
-
-            def _setValueByIndex(self, idx, value, field):
-                beforeVal = self._fields[idx]
-                self._fields[idx] = value
-                self._cls._changeObj(self, beforeVal, value, field)
-                return
-
-        cls._dataClass = Data
+    def remove(self):
+        self._cls.i_removeObj(self)
         return
 
+    def get(self, attr):
+        if attr not in self._data:
+            raise AttributeError(self, "get error", attr)
+        return self._data.get(attr)
 
-def _addProperty(cls, field, descriptor):
-    writeable = descriptor.writeable
-    idx = field.idx
+    def set(self, attr, value):
+        if not self._cls.descriptor.writeable:
+            raise AttributeError('%s is none writeable.' % self._cls.__class__)
 
-    affectIndexList = [index for index in descriptor.indexList if field.name in index.cols]
+        if attr in self._cls.descriptor.primaryIndex.cols:
+            raise AttributeError("Can't modify primary key")
 
-    def readonly():
-        raise Exception('%s is none writeable.' % cls.__class__)
-
-    if writeable:
-        def setter(obj, value):
-            if not isinstance(value, type(field.default)):
-                raise TypeError(field, field.default, value)
-
-            if obj._getValueByIndex(idx) == value:
-                return
-
-            if field.name in descriptor.primaryIndex.cols:
-                raise Exception("Can't modify primary key")
-
-            for index in affectIndexList:
-                index.removeObj(obj)
-
-            obj._setValueByIndex(idx, value, field)
-
-            for index in affectIndexList:
-                index.addObj(obj)
+        beforeVal = self.get(attr)
+        if beforeVal == value:
             return
-    else:
-        setter = readonly
 
-    def getter(obj):
-        return obj._getValueByIndex(idx)
+        # check type
+        field = self._cls.descriptor.fieldsName.get(attr)
+        self._cls.i_checkType(value, field)
 
-    setattr(cls, field.name, property(getter, setter))
-    return
+        self._data[attr] = value
+        self._cls.i_changeObj(
+            obj=self,
+            beforeVal=beforeVal,
+            value=value,
+            attr=attr,
+        )
+        return
+
+    def i_getIndex(self, cols):
+        return (self._data[name] for name in cols)
+
+    def i_getPrimaryValue(self):
+        return tuple(self._data[i] for i in self._cls.descriptor.primaryIndex.cols)
 
 
 def escape(v):
