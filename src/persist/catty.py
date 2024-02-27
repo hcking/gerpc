@@ -2,11 +2,42 @@
 
 from collections import OrderedDict
 from datetime import datetime
-from persist.save import Trace, Increment
+from persist.trace import Trace
 
 from util.logger import getLogger
 
 log = getLogger(__name__)
+
+
+class Increment:
+    _isConfig = False
+    _incrementStep = 0
+    _incrementSuffix = 0
+
+    def __new__(cls, *args, **kwargs):
+        raise NotImplementedError
+
+    @classmethod
+    def setAutoIncrementSuffix(cls, suffix, radix=10, suffixLength=5):
+        suffix = int(suffix)
+        step = int(radix) ** int(suffixLength)
+        assert 0 < suffix < step, '`suffix` is out of range: [%d, %d)' % (1, step)
+        cls._incrementStep = step
+        cls._incrementSuffix = suffix
+        cls._isConfig = True
+        return
+
+    @classmethod
+    def getStep(cls):
+        if not cls._isConfig:
+            raise AttributeError("need setAutoIncrementSuffix")
+        return cls._incrementStep
+
+    @classmethod
+    def getSuffix(cls):
+        if not cls._isConfig:
+            raise AttributeError("need setAutoIncrementSuffix")
+        return cls._incrementSuffix
 
 
 class HashIndexBase:
