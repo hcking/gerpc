@@ -2,7 +2,7 @@
 import struct
 
 from server.errors import ProtocolError
-from util.log import getLogger
+from util.logger import getLogger
 from proto.pn import ruleMap, getProtocolReq, getProtocolResp
 
 log = getLogger(__name__)

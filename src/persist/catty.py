@@ -4,7 +4,7 @@ from collections import OrderedDict
 from datetime import datetime
 from persist.save import Trace, Increment
 
-from util.log import getLogger
+from util.logger import getLogger
 
 log = getLogger(__name__)
 

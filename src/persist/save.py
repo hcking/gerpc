@@ -1,6 +1,6 @@
 # coding=utf8
 
-from util.log import getLogger
+from util.logger import getLogger
 
 log = getLogger(__name__)
 

@@ -6,10 +6,11 @@ import signal
 
 from configure import Configure
 from server.server import GameServer
-from util.log import getLogger
+from util import logger
 from cache import constant
 
-log = getLogger(__name__)
+logger.init()
+log = logger.getLogger()
 
 _isExit = False
 
@@ -29,6 +30,7 @@ def systemExit():
     global _isExit
     if _isExit:
         return
+
     constant.gameServer.close()
     log.warning("SystemExit on %s", Configure.address)
     print("SystemExit on %s", Configure.address)

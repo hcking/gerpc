@@ -18,7 +18,7 @@ from server.context import getContext
 from server.errors import ProtocolError
 from proto.pn import ruleMap, getProtocFunc, getProtocolResp
 
-from util.log import getLogger
+from util.logger import getLogger
 
 log = getLogger(__name__)
 

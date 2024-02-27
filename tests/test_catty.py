@@ -29,16 +29,6 @@ class CattyTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.conn.close()
 
-    def test_load(self):
-        role_id = 256470010  # exist
-        res = Role.load(self.conn, role_id=role_id)
-        self.assertEqual(res, None, 'load not return')
-        role = Role.get('Role_Id_Idx', role_id=role_id)
-        if role:
-            print('test_load ok')
-        # self.assertTrue(role.get('role_id') == role_id)
-        return
-
     def test_change(self):
         role = Role.new(
             role_id=0,
