@@ -5,24 +5,24 @@ from configure import Configure
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-logFormat = '%(asctime)s %(filename)s %(levelname)s:%(message)s'
 
-# 创建日志记录器
-logger = logging.getLogger(__name__)
-logger.setLevel(Configure.logLevel)
-d = os.path.dirname(Configure.logPath)
-fullPath = os.path.abspath(d)
-if not os.path.exists(fullPath):
-    os.makedirs(fullPath)
+def getLogger(name, logPath=None, level=None, handler=None, logFormat=None):
+    logger = logging.getLogger(name)
+    logLevel = level or Configure.logLevel
+    logger.setLevel(logLevel)
 
-handler = TimedRotatingFileHandler(Configure.logPath, when='midnight', interval=1, backupCount=30)
-handler.setLevel(Configure.logLevel)
+    logPath = logPath or Configure.logPath
+    d = os.path.dirname(logPath)
+    fullPath = os.path.abspath(d)
+    if not os.path.exists(fullPath):
+        os.makedirs(fullPath)
 
-# 设置日志记录格式
-formatter = logging.Formatter(logFormat)
-handler.setFormatter(formatter)
+    if not handler:
+        handler = TimedRotatingFileHandler(Configure.logPath, when='midnight', interval=1, backupCount=30)
+        handler.setLevel(logLevel)
 
-# 将 handler 添加到日志记录器
-logger.addHandler(handler)
+    logFormat = logFormat or logging.Formatter('%(asctime)s %(filename)s %(levelname)s:%(message)s')
 
-getLogger = logging.getLogger
+    handler.setFormatter(logFormat)
+    logger.addHandler(handler)
+    return logger
