@@ -24,6 +24,6 @@
 ## 使用说明
 
 ```commandline
-python make.py # 编译生成 protobuf 文件 自定义协议i文件
+python make.py # 编译生成 protobuf 文件 自定义协议文件
 cd src; python RunServer.py # 启动游戏服务器 
 ```
