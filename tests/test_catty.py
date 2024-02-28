@@ -5,19 +5,11 @@ import unittest
 from data.card import (
     Role,
 )
-from util.dbpool import MyConnect
-
-dbconfig = {
-    "host": "172.16.16.59",
-    "port": 3306,
-    "user": "root",
-    "passwd": "zhengtu#123.com",
-    "db": "atm_test_tzz",
-}
+from util.dbpool import getConn
 
 
 class CattyTest(unittest.TestCase):
-    conn = MyConnect(**dbconfig)
+    conn = getConn()
 
     @classmethod
     def setUpClass(cls):

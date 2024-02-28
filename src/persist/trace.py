@@ -3,6 +3,7 @@
 import inspect
 import os.path
 
+from configure import Configure
 from util.logger import getLogger
 
 log = getLogger(__name__)
@@ -58,7 +59,8 @@ class Trace:
     @classmethod
     def _record(cls, recordTuple):
         s = str(recordTuple)
-        print(s)
+        if Configure.debugMode:
+            print(s)
         log.info(s)
         return
 

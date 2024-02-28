@@ -1,9 +1,8 @@
 # coding=utf8
 
 from collections import OrderedDict
-from datetime import datetime
-from persist.trace import Trace
-from persist.writeback import WriteBack
+from persist.writeback import changeObj, removeObj, newObj, newWriteBack
+from persist.fn import escape, getPrimaryValue, getIndex
 
 
 class Increment:
@@ -281,41 +280,8 @@ class CattyBase:
             index.addObj(obj)
 
         cls._all.add(obj)
-
-        if cls.descriptor.writeable:
-            cls._writeBack.record_pk.add(getPrimaryValue(obj.data, cls.descriptor))
-            if _doTrace:
-                cls._writeBack.record_insert.add(obj)
-                Trace.traceNew(cls.descriptor.tbl, tuple(data.values()))
+        newObj(cls, obj, _doTrace=_doTrace)
         return obj
-
-    @classmethod
-    def i_removeObj(cls, obj):
-        cls._all.discard(obj)
-
-        if cls.descriptor.writeable:
-            cls._writeBack.record_delete.add(obj)
-            pkVal = getPrimaryValue(obj.data, cls.descriptor)
-            cls._writeBack.record_pk.discard(pkVal)
-            cls._writeBack.record_pk_delete.add(pkVal)
-            Trace.traceDelete(
-                tbl=cls.descriptor.tbl,
-                pkVal=pkVal,
-            )
-        return
-
-    @classmethod
-    def i_changeObj(cls, obj, beforeVal, value, attr):
-        if cls.descriptor.writeable:
-            cls._writeBack.record_update.add(obj)
-            Trace.traceChange(
-                tbl=cls.descriptor.tbl,
-                pkVal=getPrimaryValue(obj.data, cls.descriptor),
-                attrName=attr,
-                old=beforeVal,
-                new=value,
-            )
-        return
 
     @classmethod
     def _fixAutoIncrementValue(cls, value):
@@ -433,7 +399,7 @@ class CattyBase:
         cls._autoIncrementValue = 0
 
         cls._all = set()
-        cls._writeBack = WriteBack(cls)
+        cls._writeBack = newWriteBack(cls)
         return
 
 
@@ -451,7 +417,7 @@ class Data:
         return self.__str__()
 
     def remove(self):
-        self.cls.i_removeObj(self)
+        removeObj(self.cls, self)
         return
 
     def get(self, attr):
@@ -475,30 +441,11 @@ class Data:
         self.cls.i_checkType(value, field)
 
         self.data[attr] = value
-        self.cls.i_changeObj(
+        changeObj(
+            cls=self.cls,
             obj=self,
             beforeVal=beforeVal,
             value=value,
             attr=attr,
         )
         return
-
-
-def getIndex(data, cols):
-    return (data[name] for name in cols)
-
-
-def getPrimaryValue(data, descriptor):
-    return tuple(data[i] for i in descriptor.primaryIndex.cols)
-
-
-def escape(v):
-    if v is None:
-        return 'null'
-    if type(v) is str:
-        if "'" in v:
-            return '"%s"' % v
-        return "'%s'" % v
-    if type(v) is datetime:
-        return "'%s'" % v.strftime('%Y-%m-%d %H:%M:%S')
-    return '%s' % v

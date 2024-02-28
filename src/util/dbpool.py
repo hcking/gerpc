@@ -2,6 +2,10 @@
 
 import pymysql
 
+from configure import dbConfig
+
+_conn = None
+
 
 class MyConnect(object):
     def __init__(self, host, port, user, passwd, db):
@@ -32,3 +36,11 @@ class MyConnect(object):
     def close(self):
         self.connect.close()
         return
+
+
+def getConn():
+
+    global _conn
+    if _conn:
+        return _conn
+    return MyConnect(**dbConfig)
