@@ -27,6 +27,13 @@ class CattyTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.conn.close()
 
+    def test_load(self):
+        # load one
+        Role.load(self.conn, role_id=200001)
+        # load all
+        Role.load(self.conn)
+        return
+
     def test_change(self):
         role = Role.new(
             role_id=0,
@@ -62,6 +69,29 @@ class CattyTest(unittest.TestCase):
         with self.assertRaises(Exception):
             role.set('role_id', 1)
 
+        return
+
+    def test_getByIndex(self):
+        role1 = Role.new(
+            role_id=0,
+            name="test1",
+            account="test1@test",
+            gold=10,
+        )
+        _ = Role.new(
+            role_id=0,
+            name="test2",
+            account="test2@test",
+            gold=10,
+        )
+        _ = Role.new(
+            role_id=0,
+            name="test3",
+            account="test3@test",
+            gold=10,
+        )
+        role2 = Role.getByIndex('Role_Id_Idx', role_id=role1.get('role_id'))
+        self.assertTrue(role1 is role2)
         return
 
 

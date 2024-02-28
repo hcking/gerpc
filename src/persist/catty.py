@@ -4,10 +4,6 @@ from collections import OrderedDict
 from datetime import datetime
 from persist.trace import Trace
 
-from util.logger import getLogger
-
-log = getLogger(__name__)
-
 
 class Increment:
     _isConfig = False
@@ -55,9 +51,6 @@ class HashIndexBase:
             return self.values == other.values
         return False
 
-    def __str__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.values)
-
 
 class HashIndex:
     __slots__ = (
@@ -84,12 +77,6 @@ class HashIndex:
         self.fields = None
         self.indexName = self.name.title()  # indexMethod name
         self._data = {}
-
-    def __str__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.cols)
-
-    def __repr__(self):
-        return self.__str__()
 
     def addObj(self, obj):
         index = self._getIndex(obj)
@@ -170,12 +157,6 @@ class Descriptor:
         if writeable:
             assert self.primaryIndex is not None, 'Writeable object must have an unique index.'
 
-    def __str__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.name)
-
-    def __repr__(self):
-        return self.__str__()
-
 
 class FieldDescriptor:
     __slots__ = ('name', 'kind', 'default', 'idx')
@@ -185,12 +166,6 @@ class FieldDescriptor:
         self.kind = kind
         self.default = default
         self.idx = None
-
-    def __str__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.name)
-
-    def __repr__(self):
-        return self.__str__()
 
 
 class CattyMeta(type):
@@ -231,13 +206,13 @@ class CattyBase:
         raise NotImplementedError
 
     @classmethod
-    def get(cls, indexName, **kwargs):
+    def getByIndex(cls, indexName, **kwargs):
         if indexName not in cls._indexMap:
-            raise ValueError(indexName, "not index allIndexName:", cls._indexMap.keys())
+            raise AttributeError(indexName, "not index allIndexName:", cls._indexMap.keys())
         return cls._indexMap[indexName].getObj(**kwargs)
 
     @classmethod
-    def getIndexName(cls):
+    def getIndexNames(cls):
         return cls._indexMap.keys() if cls._indexMap else None
 
     @classmethod
@@ -249,7 +224,7 @@ class CattyBase:
         """ user add add data """
         if cls._autoIndex:
             if kwargs.get(cls._autoIndex.cols[0], 0) != 0:
-                raise ValueError(cls._autoIndex, 'auto must be 0 or no input')
+                raise AttributeError(cls._autoIndex, 'auto must be 0 or no input')
 
         data = cls._genDataByDict(kwargs)
         return cls._newObj(data, _doTrace=True)
@@ -491,7 +466,7 @@ class Data:
         self._data = data
 
     def __str__(self):
-        return '<Data %s %s >' % (self.__class__.__name__, self._cls.descriptor.tbl)
+        return '<%s %s %s>' % (self.__class__.__name__, self._cls.descriptor.tbl, id(self))
 
     def __repr__(self):
         return self.__str__()
