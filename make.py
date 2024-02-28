@@ -6,6 +6,7 @@ import sys
 
 isWindows = sys.platform.startswith('win')
 
+pythonExec = 'python3'
 protoFileList = ['xx.proto']
 protoc = 'protoc'
 toProtoDir = os.path.join('src', 'proto')
@@ -35,24 +36,13 @@ def makeProto():
         doCommand(cmd)
 
     createFile(os.path.join(toProtoDir, '__init__.py'))
-    doCommand('cd protobuf && python3 gen.py')
-    return
-
-
-def remove_pyc_files(directory):
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.endswith(".pyc"):
-                f = os.path.join(root, file)
-                print(f)
-                os.remove(f)
+    doCommand(f'cd protobuf && {pythonExec} gen.py')
     return
 
 
 def clean():
     if os.path.exists(toProtoDir):
         shutil.rmtree(toProtoDir)
-    # remove_pyc_files(".")
     return
 
 

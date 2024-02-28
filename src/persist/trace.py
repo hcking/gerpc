@@ -1,6 +1,8 @@
 # coding=utf8
 
 import inspect
+import os.path
+
 from util.logger import getLogger
 
 log = getLogger(__name__)
@@ -18,7 +20,7 @@ class Trace:
             lineno,
             'traceDelete',
             tbl,
-            str(pkVal),
+            pkVal,
         )
         cls._record(recordTuple)
         return
@@ -32,10 +34,10 @@ class Trace:
             lineno,
             'traceChange',
             tbl,
-            str(pkVal),
+            pkVal,
             attrName,
-            str(old),
-            str(new),
+            old,
+            new,
         )
         cls._record(recordTuple)
         return
@@ -66,4 +68,5 @@ class Trace:
         caller = frame.f_back.f_back.f_back.f_back
         filename = caller.f_code.co_filename
         lineno = caller.f_lineno
-        return filename, lineno
+        basename = os.path.basename(filename)
+        return basename, lineno

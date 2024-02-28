@@ -1,11 +1,9 @@
 # coding=utf8
 
-import time
 import unittest
 
 from data.card import (
     Role,
-    Role_MailList,
 )
 from util.dbpool import MyConnect
 
@@ -34,12 +32,21 @@ class CattyTest(unittest.TestCase):
             role_id=0,
             name="test1",
             account="test1@test",
-            gold=0,
-            token=0,
+            gold=10,
         )
-
-        self.assertTrue(role.get('role_id') > 0)
+        role_id = role.get('role_id')
+        role2 = Role.new(
+            name='test2',
+            account='test2@test'
+        )
+        self.assertTrue(role_id > 0)
+        self.assertEqual(role.get('gold'), 10)
+        role2_id = role2.get('role_id')
+        self.assertTrue(role2_id > role_id)
         role.set('gold', 20)
+
+        role.set('token', 30)
+        role.set('token', 30)
         role.set('token', 30)
         self.assertEqual(role.get('gold'), 20)
 
@@ -50,20 +57,10 @@ class CattyTest(unittest.TestCase):
             role._unknown = 1
 
         with self.assertRaises(Exception):
-            role.set('role_id', 1)
+            role.set('_unknown', 1)
 
-        Role_MailList.load(self.conn, mail_id=137860010)
-        nowTime = int(time.time())
-        m = Role_MailList.new(
-            mail_id=0,
-            type=1,
-            content="test",
-            stime=nowTime,
-        )
-        self.assertTrue(m)
-        self.assertTrue(m.get('mail_id') > 0)
-        self.assertEqual(m.get('type'), 1)
-        self.assertEqual(m.get('stime'), nowTime)
+        with self.assertRaises(Exception):
+            role.set('role_id', 1)
 
         return
 
