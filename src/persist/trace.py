@@ -16,9 +16,9 @@ class Trace:
     def traceDelete(cls, tbl, pkVal):
         filename, lineno = cls._getTraceParams()
         recordTuple = (
+            'traceDelete',
             filename,
             lineno,
-            'traceDelete',
             tbl,
             pkVal,
         )
@@ -30,9 +30,9 @@ class Trace:
         filename, lineno = cls._getTraceParams()
 
         recordTuple = (
+            'traceChange',
             filename,
             lineno,
-            'traceChange',
             tbl,
             pkVal,
             attrName,
@@ -46,9 +46,9 @@ class Trace:
     def traceNew(cls, tbl, fields):
         filename, lineno = cls._getTraceParams()
         recordTuple = (
+            'traceNew',
             filename,
             lineno,
-            'traceNew',
             tbl,
             fields,
         )
