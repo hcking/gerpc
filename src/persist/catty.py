@@ -3,6 +3,7 @@
 from collections import OrderedDict
 from datetime import datetime
 from persist.trace import Trace
+from persist.writeback import WriteBack
 
 
 class Increment:
@@ -99,7 +100,7 @@ class HashIndex:
         return
 
     def _getIndex(self, obj):
-        values = obj.i_getIndex(self.cols)
+        values = getIndex(obj.data, self.cols)
         index = HashIndexBase(values)
         return index
 
@@ -186,7 +187,6 @@ class CattyBase:
     _indexMap = None
     _autoIndex = None
     _autoIncrementValue = None
-    _size = None
     _all = None
     _isConfig = False
 
@@ -196,11 +196,7 @@ class CattyBase:
     _sql_create = None
     _sql_insert = None
 
-    _record_delete = None
-    _record_update = None
-    _record_insert = None
-    _record_pk = None
-    _record_pk_delete = None
+    _writeBack = None
 
     def __new__(cls, *args, **kwargs):
         raise NotImplementedError
@@ -275,30 +271,33 @@ class CattyBase:
         cls._checkIdx(data)
         # new data
         obj = Data(cls, data)
+
+        if cls.descriptor.writeable:
+            pk = getPrimaryValue(data, cls.descriptor)
+            if pk in cls._writeBack.record_pk or pk in cls._writeBack.record_pk_delete:
+                return
+
         for index in cls.descriptor.indexList:
             index.addObj(obj)
 
         cls._all.add(obj)
 
-        writeable = cls.descriptor.writeable
-        if writeable:
-            cls._record_pk.add(obj.i_getPrimaryValue())
+        if cls.descriptor.writeable:
+            cls._writeBack.record_pk.add(getPrimaryValue(obj.data, cls.descriptor))
             if _doTrace:
-                cls._record_insert.add(obj)
-                cls._size += 1
-                Trace.traceNew(cls.descriptor.tbl, list(data.values()))
+                cls._writeBack.record_insert.add(obj)
+                Trace.traceNew(cls.descriptor.tbl, tuple(data.values()))
         return obj
 
     @classmethod
     def i_removeObj(cls, obj):
         cls._all.discard(obj)
-        cls._record_delete.add(obj)
-        pkVal = obj.i_getPrimaryValue()
-        cls._record_pk.discard(pkVal)
-        cls._record_pk_delete.add(pkVal)
-        cls._size -= 1
-        writeable = cls.descriptor.writeable
-        if writeable:
+
+        if cls.descriptor.writeable:
+            cls._writeBack.record_delete.add(obj)
+            pkVal = getPrimaryValue(obj.data, cls.descriptor)
+            cls._writeBack.record_pk.discard(pkVal)
+            cls._writeBack.record_pk_delete.add(pkVal)
             Trace.traceDelete(
                 tbl=cls.descriptor.tbl,
                 pkVal=pkVal,
@@ -307,14 +306,15 @@ class CattyBase:
 
     @classmethod
     def i_changeObj(cls, obj, beforeVal, value, attr):
-        cls._record_update.add(obj)
-        Trace.traceChange(
-            tbl=cls.descriptor.tbl,
-            pkVal=obj.i_getPrimaryValue(),
-            attrName=attr,
-            old=beforeVal,
-            new=value,
-        )
+        if cls.descriptor.writeable:
+            cls._writeBack.record_update.add(obj)
+            Trace.traceChange(
+                tbl=cls.descriptor.tbl,
+                pkVal=getPrimaryValue(obj.data, cls.descriptor),
+                attrName=attr,
+                old=beforeVal,
+                new=value,
+            )
         return
 
     @classmethod
@@ -348,12 +348,6 @@ class CattyBase:
             if cls._autoIncrementValue <= 0:
                 cls._autoIncrementValue = Increment.getSuffix()
 
-        sql = 'select count(*) from {};'.format(descriptor.tbl)
-        count = conn.query(sql)[0][0]
-        if not count:
-            count = 0
-        cls._size = count
-
         cls._isConfig = True
         return
 
@@ -373,16 +367,6 @@ class CattyBase:
         for fields in res:
             data = cls._genDataByList(fields)
             cls._newObj(data, _doTrace=False)
-            # if descriptor.writeable:
-            #     pk = primaryKey(cls, fields)
-            #     if pk not in cls.record_pk and pk not in cls.record_pk_delete:
-            # else:
-            #     _r = list(fields)
-            #     for i, v in enumerate(_r):
-            #         dec = descriptor.fieldList[i].decode
-            #         if dec is not None:
-            #             _r[i] = dec(v)
-            #     cls.new(_r, _doTrace=False)
         return
 
     @classmethod
@@ -447,44 +431,39 @@ class CattyBase:
         cls._indexMap = {}
         cls._autoIndex = autoIndex[0] if autoIndex else None
         cls._autoIncrementValue = 0
-        cls._size = 0
 
         cls._all = set()
-        cls._record_delete = set()
-        cls._record_update = set()
-        cls._record_insert = set()
-        cls._record_pk = set()
-        cls._record_pk_delete = set()
+        cls._writeBack = WriteBack(cls)
         return
 
 
 class Data:
-    __slots__ = ('_cls', '_data',)
+    __slots__ = ('cls', 'data',)
 
     def __init__(self, cls, data):
-        self._cls = cls
-        self._data = data
+        self.cls = cls
+        self.data = data
 
     def __str__(self):
-        return '<%s %s %s>' % (self.__class__.__name__, self._cls.descriptor.tbl, id(self))
+        return '<%s %s %s>' % (self.__class__.__name__, self.cls.descriptor.tbl, id(self))
 
     def __repr__(self):
         return self.__str__()
 
     def remove(self):
-        self._cls.i_removeObj(self)
+        self.cls.i_removeObj(self)
         return
 
     def get(self, attr):
-        if attr not in self._data:
+        if attr not in self.data:
             raise AttributeError(self, "get error", attr)
-        return self._data.get(attr)
+        return self.data.get(attr)
 
     def set(self, attr, value):
-        if not self._cls.descriptor.writeable:
-            raise AttributeError('%s is none writeable.' % self._cls.__class__)
+        if not self.cls.descriptor.writeable:
+            raise AttributeError('%s is none writeable.' % self.cls.__class__)
 
-        if attr in self._cls.descriptor.primaryIndex.cols:
+        if attr in self.cls.descriptor.primaryIndex.cols:
             raise AttributeError("Can't modify primary key")
 
         beforeVal = self.get(attr)
@@ -492,11 +471,11 @@ class Data:
             return
 
         # check type
-        field = self._cls.descriptor.fieldsName.get(attr)
-        self._cls.i_checkType(value, field)
+        field = self.cls.descriptor.fieldsName.get(attr)
+        self.cls.i_checkType(value, field)
 
-        self._data[attr] = value
-        self._cls.i_changeObj(
+        self.data[attr] = value
+        self.cls.i_changeObj(
             obj=self,
             beforeVal=beforeVal,
             value=value,
@@ -504,11 +483,13 @@ class Data:
         )
         return
 
-    def i_getIndex(self, cols):
-        return (self._data[name] for name in cols)
 
-    def i_getPrimaryValue(self):
-        return tuple(self._data[i] for i in self._cls.descriptor.primaryIndex.cols)
+def getIndex(data, cols):
+    return (data[name] for name in cols)
+
+
+def getPrimaryValue(data, descriptor):
+    return tuple(data[i] for i in descriptor.primaryIndex.cols)
 
 
 def escape(v):

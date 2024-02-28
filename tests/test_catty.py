@@ -72,6 +72,11 @@ class CattyTest(unittest.TestCase):
         return
 
     def test_getByIndex(self):
+        roles = Role.all()
+        if roles:
+            for r in list(roles):
+                r.remove()
+
         role1 = Role.new(
             role_id=0,
             name="test1",
@@ -92,6 +97,9 @@ class CattyTest(unittest.TestCase):
         )
         role2 = Role.getByIndex('Role_Id_Idx', role_id=role1.get('role_id'))
         self.assertTrue(role1 is role2)
+        t = Role.getByIndex('Name_Idx', name='test1')
+        self.assertTrue(role1 is t)
+        self.assertTrue(len(Role.all()) == 3)
         return
 
 

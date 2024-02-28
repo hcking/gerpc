@@ -82,6 +82,7 @@ _SD_ROLE_PD = Descriptor(
         ),
         HashIndex(
             cols=('name',),
+            unique=True,
         ),
         HashIndex(
             cols=('lv',),
