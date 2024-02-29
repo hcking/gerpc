@@ -8,7 +8,7 @@ from proto.pn import (
 
 from handler.fn import (
     GetRoleById,
-    Succ,
+    Success,
     Fail,
     GetRoleByContext,
 )
@@ -27,7 +27,7 @@ def protocLoginHandler(context):
     role.account = context.req.account
     context.resp.finalAtk = role.age
     log.debug("HandlerLogin resp %s", context.resp)
-    return Succ(context.resp)
+    return Success(context.resp)
 
 
 @registerProtocol(protocRoleInfo)
@@ -41,7 +41,7 @@ def protocLoginHandler(context):
     fillRoleInfo(role, context.resp.role)
 
     log.debug("handlerRoleInfo resp %s", context.resp)
-    return Succ(context.resp.res)
+    return Success(context.resp.res)
 
 
 def fillRoleInfo(role, resp):

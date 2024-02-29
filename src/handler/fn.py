@@ -1,7 +1,7 @@
 # coding=utf8
 
 
-def Succ(resp, ex=None):
+def Success(resp, ex=None):
     resp.succeed = True
     if ex:
         resp.extra = ex

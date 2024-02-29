@@ -189,13 +189,13 @@ class CattyBase:
     _all = None
     _isConfig = False
 
-    _sql_delete = None
-    _sql_update = None
-    _sql_select = None
-    _sql_create = None
-    _sql_insert = None
+    sql_delete = None
+    sql_update = None
+    sql_select = None
+    sql_create = None
+    sql_insert = None
 
-    _writeBack = None
+    writeBack = None
 
     def __new__(cls, *args, **kwargs):
         raise NotImplementedError
@@ -207,8 +207,9 @@ class CattyBase:
         return cls._indexMap[indexName].getObj(**kwargs)
 
     @classmethod
-    def getIndexNames(cls):
-        return cls._indexMap.keys() if cls._indexMap else None
+    def showIndexNames(cls):
+        print(cls._indexMap.keys() if cls._indexMap else None)
+        return
 
     @classmethod
     def all(cls):
@@ -255,14 +256,16 @@ class CattyBase:
 
     @classmethod
     def _checkIdx(cls, data):
-        if cls._autoIndex:
-            col = cls._autoIndex.cols[0]
-            if data[col]:
-                cls._fixAutoIncrementValue(data[col])
-            else:
-                step = Increment.getStep()
-                cls._autoIncrementValue += step
-                data[col] = cls._autoIncrementValue
+        if not cls._autoIndex:
+            return
+
+        col = cls._autoIndex.cols[0]
+        if data[col]:
+            cls._fixAutoIncrementValue(data[col])
+        else:
+            step = Increment.getStep()
+            cls._autoIncrementValue += step
+            data[col] = cls._autoIncrementValue
         return
 
     @classmethod
@@ -271,9 +274,9 @@ class CattyBase:
         # new data
         obj = Data(cls, data)
 
-        if cls.descriptor.writeable:
+        if cls.writeBack:
             pk = getPrimaryValue(data, cls.descriptor)
-            if pk in cls._writeBack.record_pk or pk in cls._writeBack.record_pk_delete:
+            if pk in cls.writeBack.record_pk:
                 return
 
         for index in cls.descriptor.indexList:
@@ -285,7 +288,7 @@ class CattyBase:
 
     @classmethod
     def _fixAutoIncrementValue(cls, value):
-        if not value:
+        if value <= 0:
             return
 
         if value < cls._autoIncrementValue:
@@ -328,7 +331,7 @@ class CattyBase:
         sets = ['`%s` in (%s)' % (k, ','.join([escape(v) for v in s]) or 'null') for k, s in kvs]
         _sql = [sql_condition] if sql_condition != '' else []
         condition = ' and '.join(values + sets + _sql)
-        _sql_select = cls._sql_select + (' where ' + condition if len(condition) != 0 else '')
+        _sql_select = cls.sql_select + (' where ' + condition if len(condition) != 0 else '')
         res = conn.query(_sql_select)
         for fields in res:
             data = cls._genDataByList(fields)
@@ -336,22 +339,51 @@ class CattyBase:
         return
 
     @classmethod
+    def limit_load(cls, conn, begin, end):
+        cls.config(conn)
+        assert isinstance(begin, int) and isinstance(end, int), 'limit_load type error'
+
+        if end > 0:
+            _sql_select = '{} limit {},{}'.format(cls.sql_select, begin, end)
+        else:
+            _sql_select = cls.sql_select
+
+        res = conn.query(_sql_select)
+        for fields in res:
+            data = cls._genDataByList(fields)
+            cls._newObj(data, _doTrace=False)
+        return len(res)
+
+    @classmethod
+    def limit_load_all(cls, conn):
+        from persist.loadcfg import getLoadLimit
+        cls.config(conn)
+        begin = 0
+        end = getLoadLimit(cls)
+        while True:
+            count = cls.limit_load(conn, begin, end)
+            if count != end:
+                break
+            begin += end
+        return
+
+    @classmethod
     def _initSql(cls):
         descriptor = cls.descriptor
         fields = descriptor.fieldList
         cols = ', '.join(['`%s`' % i.name for i in fields])
-        cls._sql_insert = 'insert into `%s`(%s) values(%s)' % (
+        cls.sql_insert = 'insert into `%s`(%s) values(%s)' % (
             descriptor.tbl,
             cols,
             ', '.join(['%s'] * len(fields)),
         )
 
-        cls._sql_select = 'select %s from `%s`' % (
+        cls.sql_select = 'select %s from `%s`' % (
             cols,
             descriptor.tbl,
         )
 
-        cls._sql_create = 'create table if not exists `%s`(%s)' % (
+        cls.sql_create = 'create table if not exists `%s`(%s)' % (
             descriptor.tbl,
             ', '.join(['`%s` %s' % (i.name, i.kind) for i in fields]),
         )
@@ -359,12 +391,12 @@ class CattyBase:
         if descriptor.primaryIndex:
             pk = descriptor.primaryIndex
             pkCondition = ' and '.join(['`%s`=%%s' % col for col in pk.cols])
-            cls._sql_update = 'update `%s` set %s where %s' % (
+            cls.sql_update = 'update `%s` set %s where %s' % (
                 descriptor.tbl,
                 ', '.join(['`%s`=%%s' % i.name for i in fields]),
                 pkCondition,
             )
-            cls._sql_delete = 'delete from `%s` where %s' % (
+            cls.sql_delete = 'delete from `%s` where %s' % (
                 descriptor.tbl,
                 pkCondition,
             )
@@ -399,7 +431,7 @@ class CattyBase:
         cls._autoIncrementValue = 0
 
         cls._all = set()
-        cls._writeBack = newWriteBack(cls)
+        cls.writeBack = newWriteBack(cls)
         return
 
 
