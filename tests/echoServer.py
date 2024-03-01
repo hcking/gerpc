@@ -10,7 +10,12 @@ def echo(socket, address):
     # using a makefile because we want to use readline()
     stream = socket.makefile(mode='rb')
     while True:
-        line = stream.readline()
+        try:
+            # line = stream.readline()
+            line = socket.recv(4096)
+        except Exception as ex:
+            print(ex)
+            line = None
         if not line:
             print("client disconnected")
             break
