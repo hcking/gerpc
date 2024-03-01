@@ -22,12 +22,7 @@ class CattyTest(unittest.TestCase):
         Role.load(self.conn, role_id=100000)
         Role.load(self.conn, role_id=100000)
         Role.load(self.conn, role_id=100000)
-        # Role.limit_load(self.conn, 0, 100)
-        # Role.limit_load(self.conn, 0, 100)
-        # role = Role.getByIndex('Role_Id_Idx', role_id=100000)
-
-        # Role.limit_load_all(self.conn)
-        self.assertTrue(1)
+        self.assertTrue(len(Role.all()) <= 1)
         return
 
     def test_writeBack(self):
@@ -37,6 +32,9 @@ class CattyTest(unittest.TestCase):
             account="test1@test",
             gold=10,
         )
+        role_id = role.get('role_id')
+        role2 = Role.getByIndex('Role_Id_Idx', role_id=role_id)
+        self.assertTrue(role is role2)
         role.set('gold', 100000)
         res = incrementSaveAll(self.conn)
         self.assertTrue(res)

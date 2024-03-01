@@ -276,7 +276,7 @@ class CattyBase:
 
         if cls.writeBack:
             pk = getPrimaryValue(data, cls.descriptor)
-            if pk in cls.writeBack.record_pk:
+            if pk in cls.writeBack.record_pk or pk in cls.writeBack.record_pk_delete:
                 return
 
         for index in cls.descriptor.indexList:

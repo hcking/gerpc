@@ -16,11 +16,16 @@ class WriteBack:
         self._isPreSave = False
 
         self.cls = cls
+
+        self.record_pk = set()  # record all data pk
+        self.record_pk_delete = set()  # record delete data pk
+
+        # current data
         self.record_delete = set()
         self.record_update = set()
         self.record_insert = set()
-        self.record_pk = set()
 
+        # writeBack use data
         self.record_delete_old = set()
         self.record_update_old = set()
         self.record_insert_old = set()
@@ -47,6 +52,7 @@ class WriteBack:
         self.record_delete_old = set()
         self.record_update_old = set()
         self.record_insert_old = set()
+        self.record_pk_delete = set()
 
         self._isPreSave = False
         return
@@ -64,9 +70,6 @@ class WriteBack:
         self.record_insert_old = set()
 
         self._isPreSave = False
-        return
-
-    def isDelete(self, pk):
         return
 
     def incrementSave(self, conn):
@@ -134,6 +137,7 @@ def removeObj(cls, obj):
         cls.writeBack.record_delete.add(obj)
         pkVal = getPrimaryValue(obj.data, cls.descriptor)
         cls.writeBack.record_pk.discard(pkVal)
+        cls.writeBack.record_pk_delete.add(pkVal)
         Trace.traceDelete(
             tbl=cls.descriptor.tbl,
             pkVal=pkVal,
