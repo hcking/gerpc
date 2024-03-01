@@ -356,7 +356,7 @@ class CattyBase:
 
     @classmethod
     def limit_load_all(cls, conn):
-        from persist.loadcfg import getLoadLimit
+        from data.loadcfg import getLoadLimit
         cls.config(conn)
         begin = 0
         end = getLoadLimit(cls)
