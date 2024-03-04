@@ -75,7 +75,7 @@ class WriteBack:
     def incrementSave(self, conn):
         self._preSave()
 
-        res = True
+        ok = True
         obj = None
         sql = None
 
@@ -97,13 +97,13 @@ class WriteBack:
                 pass
         except Exception as ex:
             log.error('incrementSave Error,,,%s,,,%s,,,%s', obj, sql, ex)
-            res = False
+            ok = False
 
-        if res:
+        if ok:
             self._success()
         else:
             self._fail()
-        return res
+        return ok
 
 
 def newWriteBack(cls):
@@ -170,18 +170,6 @@ def incrementSaveAll(conn):
         conn.query('rollback;')
         log.info("incrementSaveAll fail")
     return ok
-
-
-def _saveSuccess():
-    for wb in WriteBackList:
-        wb.success()
-    return
-
-
-def _saveFail():
-    for wb in WriteBackList:
-        wb.fail()
-    return
 
 
 def mergeSql(sql, values):

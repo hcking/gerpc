@@ -196,6 +196,7 @@ class CattyBase:
     sql_insert = None
 
     writeBack = None
+    _isLoadAll = False
 
     def __new__(cls, *args, **kwargs):
         raise NotImplementedError
@@ -203,7 +204,7 @@ class CattyBase:
     @classmethod
     def getByIndex(cls, indexName, **kwargs):
         if indexName not in cls._indexMap:
-            raise AttributeError(indexName, "not index allIndexName:", cls._indexMap.keys())
+            raise AttributeError(indexName, "no index allIndexName:", cls._indexMap.keys())
         return cls._indexMap[indexName].getObj(**kwargs)
 
     @classmethod
@@ -217,22 +218,22 @@ class CattyBase:
 
     @classmethod
     def new(cls, **kwargs):
-        """ user add add data """
+        """ user add data """
         if cls._autoIndex:
             if kwargs.get(cls._autoIndex.cols[0], 0) != 0:
                 raise AttributeError(cls._autoIndex, 'auto must be 0 or no input')
+            if not cls._isLoadAll:
+                raise AttributeError(cls, cls._autoIndex, 'autoIndex must be limit_load_all')
 
         data = cls._genDataByDict(kwargs)
-        return cls._newObj(data, _doTrace=True)
+        return cls._newData(data, _doTrace=True)
 
     @classmethod
     def _genDataByList(cls, fields):
         data = OrderedDict()
-        # check type
+
         for field in cls.descriptor.fieldList:
             val = fields[field.idx]
-            cls.i_checkType(val, field)
-
             data[field.name] = val
         return data
 
@@ -242,9 +243,7 @@ class CattyBase:
         for field in cls.descriptor.fieldList:
             if field.name not in kwargs:
                 kwargs[field.name] = field.default
-
             val = kwargs[field.name]
-            cls.i_checkType(val, field)
             data[field.name] = val
         return data
 
@@ -269,9 +268,12 @@ class CattyBase:
         return
 
     @classmethod
-    def _newObj(cls, data, _doTrace=True):
+    def _newData(cls, data, _doTrace=True):
         cls._checkIdx(data)
-        # new data
+
+        for field in cls.descriptor.fieldList:
+            val = data[field.name]
+            cls.i_checkType(val, field)
         obj = Data(cls, data)
 
         if cls.writeBack:
@@ -321,21 +323,23 @@ class CattyBase:
         return
 
     @classmethod
-    def load(cls, conn, sql_condition='', **kwargs):
+    def load(cls, conn, **kwargs):
         cls.config(conn)
 
         kw = kwargs
+        if not kw:
+            cls._isLoadAll = True
+
         kvs = [(k, v) for k, v in kw.items() if not isinstance(v, set)]
         values = ['`%s`=%s' % (k, escape(v)) for k, v in kvs]
         kvs = [(k, v) for k, v in kw.items() if isinstance(v, set)]
         sets = ['`%s` in (%s)' % (k, ','.join([escape(v) for v in s]) or 'null') for k, s in kvs]
-        _sql = [sql_condition] if sql_condition != '' else []
-        condition = ' and '.join(values + sets + _sql)
+        condition = ' and '.join(values + sets)
         _sql_select = cls.sql_select + (' where ' + condition if len(condition) != 0 else '')
         res = conn.query(_sql_select)
         for fields in res:
             data = cls._genDataByList(fields)
-            cls._newObj(data, _doTrace=False)
+            cls._newData(data, _doTrace=False)
         return
 
     @classmethod
@@ -351,7 +355,7 @@ class CattyBase:
         res = conn.query(_sql_select)
         for fields in res:
             data = cls._genDataByList(fields)
-            cls._newObj(data, _doTrace=False)
+            cls._newData(data, _doTrace=False)
         return len(res)
 
     @classmethod
@@ -365,6 +369,7 @@ class CattyBase:
             if count != end:
                 break
             begin += end
+        cls._isLoadAll = True
         return
 
     @classmethod
@@ -432,6 +437,7 @@ class CattyBase:
 
         cls._all = set()
         cls.writeBack = newWriteBack(cls)
+        cls._isLoadAll = False
         return
 
 
