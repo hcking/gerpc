@@ -2,17 +2,19 @@
 
 from gevent.server import StreamServer
 
+buffSize = 102400
+
 
 # this handler will be run for each incoming connection in a dedicated greenlet
 def echo(socket, address):
     print('New connection from %s:%s' % address)
     socket.sendall(b'Welcome to the echo server! Type quit to exit.\r\n')
     # using a makefile because we want to use readline()
-    stream = socket.makefile(mode='rb')
+    # stream = socket.makefile(mode='rb')
     while True:
         try:
             # line = stream.readline()
-            line = socket.recv(4096)
+            line = socket.recv(buffSize)
         except Exception as ex:
             print(ex)
             line = None
@@ -24,7 +26,7 @@ def echo(socket, address):
             break
         socket.sendall(line)
         print("echoed %r" % line)
-    stream.close()
+    # stream.close()
     return
 
 
