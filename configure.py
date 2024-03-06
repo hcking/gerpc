@@ -15,7 +15,7 @@ class Configure:
     address = ("127.0.0.1", 11)
     logPath = 'log/server.log'
     logLevel = LogLevel.INFO
-    backdoor = False
+    backdoor = True
     autoIncrementSuffix = 10
     debugMode = True
 

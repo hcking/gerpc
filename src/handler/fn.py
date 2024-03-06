@@ -1,5 +1,10 @@
 # coding=utf8
 
+from data.card import (
+    Role,
+    Role_MailList,
+)
+
 
 def Success(resp, ex=None):
     resp.succeed = True
@@ -20,18 +25,4 @@ def GetRoleByContext(context):
 
 
 def GetRoleById(role_id):
-    if role_id:
-        return FakeRole(role_id)
-    return None
-
-
-class Role:
-    def __init__(self, role_id):
-        self.role_id = role_id
-        self.name = str(role_id)
-        self.age = self.role_id % 100
-        self.account = str(self.role_id) + '@' + str(self.role_id)
-
-
-def FakeRole(role_id):
-    return Role(role_id)
+    return Role.getByIndex('Role_Id_Idx', role_id=role_id)

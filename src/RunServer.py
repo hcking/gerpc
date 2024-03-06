@@ -8,9 +8,9 @@ from configure import Configure
 from server.server import GameServer
 from util import logger
 from cache import constant
+from persist import writeback
 
-logger.init()
-log = logger.getLogger()
+log = logger.getLogger(name='')
 
 _isExit = False
 
@@ -53,7 +53,9 @@ def main():
         print(traceback.format_exc())
         log.error("RunServer error %s,%s", ex, traceback.format_exc())
     finally:
+        writeback.stopTimerWriteBack()
         systemExit()
+
     return
 
 

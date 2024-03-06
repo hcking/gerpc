@@ -1,9 +1,11 @@
 # coding=utf8
+import sys
 
-
+import gevent
 from persist.trace import Trace
 from persist.fn import getPrimaryValue, escape
 
+from util.dbpool import getConn
 from util.logger import getLogger
 
 log = getLogger(__name__)
@@ -119,6 +121,7 @@ def newWriteBack(cls):
     wb = WriteBack(cls)
     if wb not in WriteBackList:
         WriteBackList.append(wb)
+
     return wb
 
 
@@ -161,7 +164,10 @@ def newObj(cls, obj, _doTrace):
     return
 
 
-def incrementSaveAll(conn):
+def incrementSaveAll(conn=None):
+    log.info("incrementSaveAll begin")
+    if not conn:
+        conn = getConn()
     conn.query('start transaction;')
     ok = True
     for wb in WriteBackList:
@@ -181,3 +187,72 @@ def mergeSql(sql, values):
     params = tuple(escape(v) for v in values)
     s = sql % params
     return s
+
+
+_saveLet = None
+_interval = 60 * 5
+
+IntervalMin = 60
+IntervalMax = 60 * 60
+
+
+def setInterval(sec):
+    global _interval
+
+    if not isinstance(sec, int):
+        return False
+    if sec < IntervalMin:
+        sec = IntervalMin
+    if sec > IntervalMax:
+        sec = IntervalMax
+    old = _interval
+    _interval = sec
+    log.warning('setInterval %s,%s', old, _interval)
+    return True
+
+
+_running = True
+
+
+def defaultSave():
+    global _running
+    log.warning("defaultSave start")
+    while _running:
+        gevent.sleep(_interval)
+        incrementSaveAll()
+    log.warning("defaultSave exit")
+    return
+
+
+def windowsSave():
+    defaultSave()
+    return
+
+
+def linuxSave():
+    # todo use fork
+    defaultSave()
+    return
+
+
+if sys.platform.startswith('win'):
+    doSave = windowsSave
+else:
+    doSave = linuxSave
+
+
+def startTimerWriteBack():
+    global _saveLet
+    if _saveLet:
+        return
+
+    _saveLet = gevent.spawn(doSave)
+    return
+
+
+def stopTimerWriteBack():
+    global _running, _saveLet
+    _running = False
+    _saveLet = None
+    incrementSaveAll()
+    return

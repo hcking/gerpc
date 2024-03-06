@@ -17,7 +17,10 @@ from server.messageFunc import MessageFunc
 from server.context import getContext
 from server.errors import ProtocolError
 from proto.pn import ruleMap, getProtocFunc, getProtocolResp
+from data.card import loadFromLoadAllList
+from persist.writeback import startTimerWriteBack
 
+from util.dbpool import getConn
 from util.logger import getLogger
 
 log = getLogger(__name__)
@@ -33,6 +36,10 @@ class GameServer(StreamServer):
         self.backdoor = backdoor
 
         super().__init__(address, self.handlerConn)
+
+        conn = getConn()
+        loadFromLoadAllList(conn)
+        startTimerWriteBack()
         return
 
     def handlerConn(self, conn, address):

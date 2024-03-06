@@ -158,5 +158,5 @@ LoadAllList = [
 
 def loadFromLoadAllList(conn):
     for tab in LoadAllList:
-        tab.load(conn)
+        tab.limit_load_all(conn)
     return

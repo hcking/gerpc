@@ -7,24 +7,30 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from configure import Configure
 
-defaultTimedRotatingFileHandler = None
+defaultTimedRotatingFileHandler = TimedRotatingFileHandler(
+    Configure.logPath,
+    when='midnight',
+)
 
 _isInit = False
 
 
 def init():
-    global defaultTimedRotatingFileHandler, _isInit
+    global _isInit
     if _isInit:
         return
 
     checkPath(Configure.logPath)
-    h = TimedRotatingFileHandler(
-        Configure.logPath,
-        when='midnight',
-    )
-    defaultTimedRotatingFileHandler = h
+    handler = defaultTimedRotatingFileHandler
+    logFormat = logging.Formatter('%(asctime)s %(filename)s %(levelname)s:%(message)s')
+    handler.setLevel(Configure.logLevel)
+    handler.setFormatter(logFormat)
+    name = ''
+    logger = logging.getLogger(name)
+    logger.addHandler(handler)
+
     _isInit = True
-    return
+    return logger
 
 
 def checkPath(logPath):
@@ -35,19 +41,10 @@ def checkPath(logPath):
     return
 
 
-def getLogger(name='', logPath=None, level=None, handler=None, logFormat=None):
+def getLogger(name='', level=Configure.logLevel):
     if not _isInit:
         init()
-    logLevel = level or Configure.logLevel
-    logPath = logPath or Configure.logPath
-    handler = handler or defaultTimedRotatingFileHandler
-    logFormat = logFormat or logging.Formatter('%(asctime)s %(filename)s %(levelname)s:%(message)s')
 
     logger = logging.getLogger(name)
-    logger.setLevel(logLevel)
-    checkPath(logPath)
-
-    handler.setLevel(logLevel)
-    handler.setFormatter(logFormat)
-    logger.addHandler(handler)
+    logger.setLevel(level)
     return logger
