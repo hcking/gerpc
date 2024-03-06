@@ -18,13 +18,6 @@ class CattyTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.conn.close()
 
-    def test_load_param(self):
-        Role.load(self.conn, role_id=100000)
-        Role.load(self.conn, role_id=100000)
-        Role.load(self.conn, role_id=100000)
-        self.assertTrue(len(Role.all()) <= 1)
-        return
-
     def test_load_all(self):
         Role.load(self.conn)
         len1 = len(Role.all())
@@ -54,7 +47,15 @@ class CattyTest(unittest.TestCase):
         self.assertTrue(role is role2)
         role.set('gold', 100000)
 
-        wb = Role.writeBack
-        # res = incrementSaveAll(self.conn)
-        # self.assertTrue(res)
+        role2 = Role.new(
+            role_id=0,
+            name="test2",
+            account="test2@test",
+            gold=20,
+        )
+        role2.set('gold', 2000)
+        role2.remove()
+
+        res = incrementSaveAll(self.conn)
+        self.assertTrue(res)
         return

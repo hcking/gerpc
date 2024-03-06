@@ -228,6 +228,18 @@ class CattyBase:
         data = cls._genDataByDict(kwargs)
         return cls._newData(data, _doTrace=True)
 
+    # def clean(cls):
+    #     """
+    #     remove all
+    #     too dangerous !!!
+    #     """
+    #     _all = cls.all()
+    #     if not _all:
+    #         return
+    #     for item in list(_all):
+    #         item.remove()
+    #     return
+
     @classmethod
     def _genDataByList(cls, fields):
         data = OrderedDict()
