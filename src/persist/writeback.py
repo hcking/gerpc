@@ -83,7 +83,9 @@ class WriteBack:
             # delete
             deleteSet = self.record_delete_old - self.record_insert_old
             for obj in deleteSet:
-                pass
+                keys = getPrimaryValue(obj.data, self.cls.descriptor)
+                sql = mergeSql(obj.cls.sql_delete, keys)
+                conn.query(sql)
 
             # insert
             insertSet = self.record_insert_old - self.record_delete_old
@@ -94,7 +96,10 @@ class WriteBack:
             # change
             changeSet = self.record_update_old - self.record_delete_old - self.record_insert_old
             for obj in changeSet:
-                pass
+                keys = tuple(obj.data.values()) + getPrimaryValue(obj.data, self.cls.descriptor)
+                sql = mergeSql(obj.cls.sql_update, keys)
+                conn.query(sql)
+
         except Exception as ex:
             log.error('incrementSave Error,,,%s,,,%s,,,%s', obj, sql, ex)
             ok = False
@@ -174,6 +179,5 @@ def incrementSaveAll(conn):
 
 def mergeSql(sql, values):
     params = tuple(escape(v) for v in values)
-    _sql = sql % params
-    print(sql)
-    return _sql
+    s = sql % params
+    return s

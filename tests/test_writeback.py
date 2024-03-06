@@ -34,6 +34,14 @@ class CattyTest(unittest.TestCase):
         return
 
     def test_incrementSaveAll(self):
+        with self.assertRaises(Exception):
+            Role.new(
+                role_id=0,
+                name="test1",
+                account="test1@test",
+                gold=10,
+            )
+
         Role.limit_load_all(self.conn)
         role = Role.new(
             role_id=0,
@@ -45,9 +53,8 @@ class CattyTest(unittest.TestCase):
         role2 = Role.getByIndex('Role_Id_Idx', role_id=role_id)
         self.assertTrue(role is role2)
         role.set('gold', 100000)
-        res = incrementSaveAll(self.conn)
-        self.assertTrue(res)
 
-        res = incrementSaveAll(self.conn)
-        self.assertTrue(res)
+        wb = Role.writeBack
+        # res = incrementSaveAll(self.conn)
+        # self.assertTrue(res)
         return

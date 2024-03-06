@@ -155,7 +155,7 @@ class Descriptor:
                     break
 
         if writeable:
-            assert self.primaryIndex is not None, 'Writeable object must have an unique index.'
+            assert self.primaryIndex is not None, 'writeable object must have an unique index.'
 
 
 class FieldDescriptor:
@@ -223,7 +223,7 @@ class CattyBase:
             if kwargs.get(cls._autoIndex.cols[0], 0) != 0:
                 raise AttributeError(cls._autoIndex, 'auto must be 0 or no input')
             if not cls._isLoadAll:
-                raise AttributeError(cls, cls._autoIndex, 'autoIndex must be limit_load_all')
+                raise AttributeError(cls, cls._autoIndex, 'autoIndex must be load or limit_load_all')
 
         data = cls._genDataByDict(kwargs)
         return cls._newData(data, _doTrace=True)
@@ -343,9 +343,8 @@ class CattyBase:
         return
 
     @classmethod
-    def limit_load(cls, conn, begin, end):
+    def _limit_load(cls, conn, begin, end):
         cls.config(conn)
-        assert isinstance(begin, int) and isinstance(end, int), 'limit_load type error'
 
         if end > 0:
             _sql_select = '{} limit {},{}'.format(cls.sql_select, begin, end)
@@ -359,13 +358,16 @@ class CattyBase:
         return len(res)
 
     @classmethod
-    def limit_load_all(cls, conn):
+    def limit_load_all(cls, conn, limit=0):
         from data.loadcfg import getLoadLimit
         cls.config(conn)
         begin = 0
-        end = getLoadLimit(cls)
+        if limit > 0:
+            end = limit
+        else:
+            end = getLoadLimit(cls)
         while True:
-            count = cls.limit_load(conn, begin, end)
+            count = cls._limit_load(conn, begin, end)
             if count != end:
                 break
             begin += end
@@ -449,7 +451,7 @@ class Data:
         self.data = data
 
     def __str__(self):
-        return '<%s %s %s>' % (self.__class__.__name__, self.cls.descriptor.tbl, id(self))
+        return '<%s %s %s>' % (self.__class__.__name__, self.cls.descriptor.tbl, str(self.data))
 
     def __repr__(self):
         return self.__str__()
