@@ -2,11 +2,13 @@
 import sys
 
 import gevent
+from gevent import event
 from persist.trace import Trace
 from persist.fn import getPrimaryValue, escape
 
 from util.dbpool import getConn
 from util.logger import getLogger
+from configure import Configure
 
 log = getLogger(__name__)
 
@@ -212,14 +214,18 @@ def setInterval(sec):
 
 
 _running = True
+stop_event = event.Event()
 
 
 def defaultSave():
-    global _running
+    global _running, stop_event
     log.warning("defaultSave start")
     while _running:
         gevent.sleep(_interval)
+        stop_event.clear()
         incrementSaveAll()
+        stop_event.set()
+
     log.warning("defaultSave exit")
     return
 
@@ -253,6 +259,8 @@ def startTimerWriteBack():
 def stopTimerWriteBack():
     global _running, _saveLet
     _running = False
+    if not Configure.isWindows:
+        stop_event.wait()
     _saveLet = None
     incrementSaveAll()
     return

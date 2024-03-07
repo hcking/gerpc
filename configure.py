@@ -1,4 +1,6 @@
 # coding=utf-8
+import sys
+
 
 class LogLevel:
     CRITICAL = 50
@@ -18,6 +20,7 @@ class Configure:
     backdoor = True
     autoIncrementSuffix = 10
     debugMode = True
+    isWindows = sys.platform.startswith('win')
 
 
 dbConfig = {

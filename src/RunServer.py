@@ -24,7 +24,7 @@ def SIGINTHandler(sig, frame):
 
 def registerSignal():
     signal.signal(signal.SIGINT, SIGINTHandler)
-
+    return
 
 def systemExit():
     global _isExit
@@ -32,6 +32,7 @@ def systemExit():
         return
 
     constant.gameServer.close()
+
     log.warning("SystemExit on %s", Configure.address)
     print("SystemExit on %s", Configure.address)
     _isExit = True
