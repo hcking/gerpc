@@ -1,10 +1,10 @@
 # coding=utf8
 
-from data.card import Role, Role_MailList
+from data.card import Role, RoleMailList
 
 cfg = {
     Role: 22000,
-    Role_MailList: 30000,
+    RoleMailList: 30000,
 }
 
 

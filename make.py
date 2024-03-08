@@ -6,7 +6,7 @@ import sys
 
 isWindows = sys.platform.startswith('win')
 
-pythonExec = 'python3'
+pythonExec = 'python'
 protoFileList = ['xx.proto']
 protoc = 'protoc'
 toProtoDir = os.path.join('src', 'proto')

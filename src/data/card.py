@@ -146,13 +146,13 @@ class Role(CattyBase, metaclass=CattyMeta):
     descriptor = _SD_ROLE_PD
 
 
-class Role_MailList(CattyBase, metaclass=CattyMeta):
+class RoleMailList(CattyBase, metaclass=CattyMeta):
     descriptor = _SD_MAIL_LIST_PD
 
 
 LoadAllList = [
     Role,
-    Role_MailList,
+    RoleMailList,
 ]
 
 

@@ -70,7 +70,7 @@ def doLine(line, lineNo):
     pbName = pbFile.split('.')[0]
     pbName = pbName + '_pb2'
 
-    noName = f'protoc{protoName}'
+    noName = 'protoc{protoName}'.format(protoName=protoName)
     if no in protoNoMap:
         raise ValueError("protocol double define", no, line, lineNo)
     protoNoMap[no] = noName
@@ -78,13 +78,17 @@ def doLine(line, lineNo):
     if req in ('DictGpb',):
         reqName = req
     else:
-        reqName = f'{pbName}.{req}' if req else None
+        reqName = '{pbName}.{req}'.format(pbName=pbName, req=req) if req else None
     if resp in ('DictGpb',):
         respName = resp
     else:
-        respName = f'{pbName}.{resp}' if resp else None
+        respName = '{pbName}.{resp}'.format(pbName=pbName, resp=resp) if resp else None
 
-    _str = f"    {noName}: [{reqName}, {respName}, None],\n"
+    _str = "    {noName}: [{reqName}, {respName}, None],\n".format(
+        noName=noName,
+        reqName=reqName,
+        respName=respName,
+    )
 
     protocolNoMapStr += _str
     return
@@ -109,7 +113,7 @@ def doCache():
     # protocol Define
     protoDefineStr = ""
     for no, noName in protoNoMap.items():
-        line = f'{noName} = {no}\n'
+        line = '{noName} = {no}\n'.format(noName=noName, no=no)
         protoDefineStr += line
 
     # format code

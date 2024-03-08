@@ -2,7 +2,7 @@
 
 from data.card import (
     Role,
-    Role_MailList,
+    RoleMailList,
 )
 
 

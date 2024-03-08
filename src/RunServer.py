@@ -26,6 +26,7 @@ def registerSignal():
     signal.signal(signal.SIGINT, SIGINTHandler)
     return
 
+
 def systemExit():
     global _isExit
     if _isExit:
