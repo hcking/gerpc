@@ -143,6 +143,10 @@ def changeObj(cls, obj, beforeVal, value, attr):
 
 def removeObj(cls, obj):
     cls._all.discard(obj)
+
+    for index in cls.descriptor.indexList:
+        index.removeObj(obj)
+
     if cls.descriptor.writeable:
         cls.writeBack.record_delete.add(obj)
         pkVal = getPrimaryValue(obj.data, cls.descriptor)

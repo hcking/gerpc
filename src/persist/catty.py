@@ -1,7 +1,7 @@
 # coding=utf8
 
 from collections import OrderedDict
-from persist.writeback import changeObj, removeObj, newObj, newWriteBack
+from persist import writeback
 from persist.fn import escape, getPrimaryValue, getIndex
 
 
@@ -47,7 +47,7 @@ class HashIndexBase:
         return hash(self.values)
 
     def __eq__(self, other):
-        if type(self) is type(other):
+        if isinstance(other, HashIndexBase):
             return self.values == other.values
         return False
 
@@ -61,8 +61,15 @@ class HashIndex:
         'autoIncrement',
         'fields',
         'indexName',
-        '_data',
+        'data',
     )
+
+    def __str__(self):
+        s = '<{} {} {}>'.format(self.__class__.__name__, self.name, self.cols)
+        return s
+
+    def __repr__(self):
+        return self.__str__()
 
     def __init__(self, cols, name=None, unique=False, pk=False, auto=False):
         self.cols = cols
@@ -76,26 +83,30 @@ class HashIndex:
         self.autoIncrement = auto
         self.fields = None
         self.indexName = self.name.title()  # indexMethod name
-        self._data = {}
+        self.data = {}
 
     def addObj(self, obj):
         index = self._getIndex(obj)
         if self.unique:
-            self._data[index] = obj
+            if index in self.data:
+                raise IndexError("repeat index", self, self.data[index], obj)
+            self.data[index] = obj
         else:
-            if index in self._data:
-                self._data[index].add(obj)
+            if index in self.data:
+                self.data[index].add(obj)
             else:
-                self._data[index] = set()
-                self._data[index].add(obj)
+                self.data[index] = {obj}
         return
 
     def removeObj(self, obj):
         index = self._getIndex(obj)
         if self.unique:
-            del self._data[index]
+            if index not in self.data:
+                print('removeObj unique index', index.values, obj)
+            else:
+                del self.data[index]
         else:
-            self._data[index].discard(obj)
+            self.data[index].discard(obj)
         return
 
     def _getIndex(self, obj):
@@ -108,7 +119,7 @@ class HashIndex:
             raise Exception("index error", self.cols)
         values = [kwargs[col] for col in self.cols]
         index = HashIndexBase(values)
-        res = self._data.get(index)
+        res = self.data.get(index)
         return res
 
 
@@ -122,11 +133,11 @@ class Descriptor:
         'ordered',
         'deletable',
         'primaryIndex',
-        'fieldsName'
+        'fieldsName',
+        'affectIndexMap',
     )
 
     def __init__(self, name, tbl, fieldList, indexList=None, writeable=False, ordered=False, deletable=False):
-        assert isinstance(fieldList, list)
         self.name = name
         self.tbl = tbl
         self.fieldList = fieldList
@@ -136,10 +147,13 @@ class Descriptor:
         self.deletable = deletable
         self.primaryIndex = None
         self.fieldsName = {}
+        self.affectIndexMap = {}
 
         for idx, field in enumerate(self.fieldList):
             field.idx = idx
             self.fieldsName[field.name] = field
+            affectIndex = [index for index in self.indexList if field.name in index.cols]
+            self.affectIndexMap[field.name] = affectIndex
 
         for index in self.indexList:
             index.fields = tuple([self.fieldsName[i] for i in index.cols])
@@ -159,11 +173,10 @@ class Descriptor:
 
 
 class FieldDescriptor:
-    __slots__ = ('name', 'kind', 'default', 'idx')
+    __slots__ = ('name', 'default', 'idx')
 
-    def __init__(self, name, kind, default):
+    def __init__(self, name, default):
         self.name = name
-        self.kind = kind
         self.default = default
         self.idx = None
 
@@ -192,7 +205,6 @@ class CattyBase:
     sql_delete = None
     sql_update = None
     sql_select = None
-    sql_create = None
     sql_insert = None
 
     writeBack = None
@@ -220,10 +232,16 @@ class CattyBase:
     def new(cls, **kwargs):
         """ user add data """
         if cls._autoIndex:
-            if kwargs.get(cls._autoIndex.cols[0], 0) != 0:
-                raise AttributeError(cls._autoIndex, 'auto must be 0 or no input')
+            if kwargs.get(cls._autoIndex.cols[0], None) != 0:
+                raise AttributeError(cls._autoIndex, 'auto must be 0')
             if not cls._isLoadAll:
                 raise AttributeError(cls, cls._autoIndex, 'autoIndex must be load or limit_load_all')
+
+        for index in cls.descriptor.indexList:
+            if index.unique:
+                for attr in index.cols:
+                    if attr not in kwargs:
+                        raise AttributeError('unique index must index, not default', cls, index, attr)
 
         data = cls._genDataByDict(kwargs)
         return cls._newData(data, _doTrace=True)
@@ -231,11 +249,11 @@ class CattyBase:
     @classmethod
     def clean(cls, force=False):
         """
-        remove all
-        too dangerous !!!
+        !!! remove all
+        !!! too dangerous
         """
-        if not force:
-            raise AttributeError('too dangerous !!!')
+        if force is not True:
+            raise AttributeError('!!! too dangerous')
         _all = cls.all()
         if not _all:
             return
@@ -300,7 +318,7 @@ class CattyBase:
             index.addObj(obj)
 
         cls._all.add(obj)
-        newObj(cls, obj, _doTrace=_doTrace)
+        writeback.newObj(cls, obj, _doTrace=_doTrace)
         return obj
 
     @classmethod
@@ -405,11 +423,6 @@ class CattyBase:
             descriptor.tbl,
         )
 
-        cls.sql_create = 'create table if not exists `%s`(%s)' % (
-            descriptor.tbl,
-            ', '.join(['`%s` %s' % (i.name, i.kind) for i in fields]),
-        )
-
         if descriptor.primaryIndex:
             pk = descriptor.primaryIndex
             pkCondition = ' and '.join(['`%s`=%%s' % col for col in pk.cols])
@@ -453,13 +466,13 @@ class CattyBase:
         cls._autoIncrementValue = 0
 
         cls._all = set()
-        cls.writeBack = newWriteBack(cls)
+        cls.writeBack = writeback.newWriteBack(cls)
         cls._isLoadAll = False
         return
 
 
 class Data:
-    __slots__ = ('cls', 'data',)
+    __slots__ = ('cls', 'data')
 
     def __init__(self, cls, data):
         self.cls = cls
@@ -472,7 +485,7 @@ class Data:
         return self.__str__()
 
     def remove(self):
-        removeObj(self.cls, self)
+        writeback.removeObj(self.cls, self)
         return
 
     def get(self, attr):
@@ -495,8 +508,16 @@ class Data:
         field = self.cls.descriptor.fieldsName[attr]
         self.cls.i_checkType(value, field)
 
+        affectIndex = self.cls.descriptor.affectIndexMap[attr]
+        for index in affectIndex:
+            index.removeObj(self)
+
         self.data[attr] = value
-        changeObj(
+
+        for index in affectIndex:
+            index.addObj(self)
+
+        writeback.changeObj(
             cls=self.cls,
             obj=self,
             beforeVal=beforeVal,
