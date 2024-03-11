@@ -228,17 +228,20 @@ class CattyBase:
         data = cls._genDataByDict(kwargs)
         return cls._newData(data, _doTrace=True)
 
-    # def clean(cls):
-    #     """
-    #     remove all
-    #     too dangerous !!!
-    #     """
-    #     _all = cls.all()
-    #     if not _all:
-    #         return
-    #     for item in list(_all):
-    #         item.remove()
-    #     return
+    @classmethod
+    def clean(cls, force=False):
+        """
+        remove all
+        too dangerous !!!
+        """
+        if not force:
+            raise AttributeError('too dangerous !!!')
+        _all = cls.all()
+        if not _all:
+            return
+        for item in list(_all):
+            item.remove()
+        return
 
     @classmethod
     def _genDataByList(cls, fields):
@@ -475,7 +478,7 @@ class Data:
     def get(self, attr):
         if attr not in self.data:
             raise AttributeError(self, "get error", attr)
-        return self.data.get(attr)
+        return self.data[attr]
 
     def set(self, attr, value):
         if not self.cls.descriptor.writeable:
@@ -489,7 +492,7 @@ class Data:
             return
 
         # check type
-        field = self.cls.descriptor.fieldsName.get(attr)
+        field = self.cls.descriptor.fieldsName[attr]
         self.cls.i_checkType(value, field)
 
         self.data[attr] = value
