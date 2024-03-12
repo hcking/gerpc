@@ -73,6 +73,7 @@ class CattyTest(unittest.TestCase):
 
     def test_change(self):
         Role.limit_load_all(self.conn)
+        Role.clean(force=True)
         role = Role.new(
             role_id=0,
             name="test1",
@@ -112,24 +113,27 @@ class CattyTest(unittest.TestCase):
 
     def test_getByIndex(self):
         Role.limit_load_all(self.conn)
+        Role.clean(force=True)
         role1 = Role.new(
             role_id=0,
             name="test1",
             account="test1@test",
             gold=10,
         )
-        _ = Role.new(
+        role2 = Role.new(
             role_id=0,
             name="test2",
             account="test2@test",
             gold=10,
         )
-        _ = Role.new(
+        role3 = Role.new(
             role_id=0,
             name="test3",
             account="test3@test",
             gold=10,
         )
+        role2.remove()
+        role3.remove()
         role2 = Role.getByIndex('Role_Id_Idx', role_id=role1.get('role_id'))
         self.assertTrue(role1 is role2)
         t = Role.getByIndex('Name_Idx', name='test1')
