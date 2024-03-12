@@ -242,7 +242,6 @@ class CattyBase:
                 for attr in index.cols:
                     if attr not in kwargs:
                         raise AttributeError('unique index must index, not default', cls, index, attr)
-
         data = cls._genDataByDict(kwargs)
         return cls._newData(data, _doTrace=True)
 
@@ -307,6 +306,7 @@ class CattyBase:
         for field in cls.descriptor.fieldList:
             val = data[field.name]
             cls.i_checkType(val, field)
+
         obj = Data(cls, data)
 
         if cls.writeBack:

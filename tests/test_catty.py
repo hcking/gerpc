@@ -47,30 +47,6 @@ class CattyTest(unittest.TestCase):
         Role.clean(force=True)
         return
 
-    def test_new_unique_index(self):
-        Role.limit_load_all(self.conn)
-
-        # repeat name
-        name = 'name1'
-        account = 'account1'
-        _ = Role.new(
-            role_id=0,
-            name=name,
-            account=account,
-        )
-        with self.assertRaises(Exception):
-            _ = Role.new(
-                role_id=0,
-                name=name,
-            )
-        with self.assertRaises(Exception):
-            _ = Role.new(
-                role_id=0,
-                account=account,
-            )
-        Role.clean(force=True)
-        return
-
     def test_change(self):
         Role.limit_load_all(self.conn)
         Role.clean(force=True)
@@ -138,6 +114,30 @@ class CattyTest(unittest.TestCase):
         self.assertTrue(role1 is role2)
         t = Role.getByIndex('Name_Idx', name='test1')
         self.assertTrue(role1 is t)
+        Role.clean(force=True)
+        return
+
+    def test_new_unique_index(self):
+        Role.limit_load_all(self.conn)
+
+        # repeat name
+        name = 'name1'
+        account = 'account1'
+        _ = Role.new(
+            role_id=0,
+            name=name,
+            account=account,
+        )
+        with self.assertRaises(Exception):
+            _ = Role.new(
+                role_id=0,
+                name=name,
+            )
+        with self.assertRaises(Exception):
+            _ = Role.new(
+                role_id=0,
+                account=account,
+            )
         Role.clean(force=True)
         return
 
