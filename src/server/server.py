@@ -1,11 +1,14 @@
 """
 gevent GameServer
 """
-from gevent import monkey; monkey.patch_all()
+if 1:
+    from gevent import monkey
+
+    monkey.patch_all()
 
 import time
 import os
-import socket
+from gevent import socket
 import traceback
 import gevent
 
