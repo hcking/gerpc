@@ -4,6 +4,10 @@ import shutil
 import os
 import sys
 
+absPathFile = os.path.abspath(__file__)
+absPath = os.path.dirname(absPathFile)
+os.chdir(absPath)
+
 isWindows = sys.platform.startswith('win')
 
 pythonExec = 'python'
