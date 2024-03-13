@@ -10,6 +10,7 @@ from configure import Configure
 defaultTimedRotatingFileHandler = TimedRotatingFileHandler(
     Configure.logPath,
     when='midnight',
+    encoding='utf-8',
 )
 
 _isInit = False

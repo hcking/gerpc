@@ -89,7 +89,7 @@ class Role(CattyBase, metaclass=CattyMeta):
 
 class RoleMailList(CattyBase, metaclass=CattyMeta):
     descriptor = Descriptor(
-        name='_mail_list_',
+        name='mail_list',
         tbl='mail_list',
         writeable=True,
         fieldList=[

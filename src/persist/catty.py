@@ -173,12 +173,13 @@ class Descriptor:
 
 
 class FieldDescriptor:
-    __slots__ = ('name', 'default', 'idx')
+    __slots__ = ('name', 'default', 'idx', 'colName')
 
-    def __init__(self, name, default):
+    def __init__(self, name, default, colName=None):
         self.name = name
         self.default = default
         self.idx = None
+        self.colName = colName
 
 
 class CattyMeta(type):
@@ -373,6 +374,10 @@ class CattyBase:
         for fields in res:
             data = cls._genDataByList(fields)
             cls._newData(data, _doTrace=False)
+        return
+
+    @classmethod
+    def loadFromCache(cls):
         return
 
     @classmethod
