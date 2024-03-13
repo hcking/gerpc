@@ -8,7 +8,7 @@ from data.card import (
 from util.dbpool import getConn
 
 
-class CattyTest(unittest.TestCase):
+class Test(unittest.TestCase):
     conn = getConn()
 
     @classmethod
@@ -140,7 +140,3 @@ class CattyTest(unittest.TestCase):
             )
         Role.clean(force=True)
         return
-
-
-if __name__ == '__main__':
-    unittest.main()

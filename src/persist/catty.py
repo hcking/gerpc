@@ -122,6 +122,9 @@ class HashIndex:
         res = self.data.get(index)
         return res
 
+    def clean(self):
+        self.data = {}
+
 
 class Descriptor:
     __slots__ = (
@@ -135,8 +138,13 @@ class Descriptor:
         'primaryIndex',
         'fieldsName',
         'affectIndexMap',
-        'reloadable',
     )
+
+    def __str__(self):
+        return '<%s %s %s>' % (self.__class__.__name__, self.name, self.tbl)
+
+    def __repr__(self):
+        return self.__str__()
 
     def __init__(
             self,
@@ -147,7 +155,6 @@ class Descriptor:
             writeable=False,
             ordered=False,
             deletable=False,
-            reloadable=False
     ):
         self.name = name
         self.tbl = tbl
@@ -159,7 +166,6 @@ class Descriptor:
         self.primaryIndex = None
         self.fieldsName = {}
         self.affectIndexMap = {}
-        self.reloadable = reloadable
 
         for idx, field in enumerate(self.fieldList):
             field.idx = idx
@@ -186,6 +192,12 @@ class Descriptor:
 
 class FieldDescriptor:
     __slots__ = ('name', 'default', 'idx', 'colName')
+
+    def __str__(self):
+        return '<%s %s %s>' % (self.__class__.__name__, self.name, self.colName)
+
+    def __repr__(self):
+        return self.__str__()
 
     def __init__(self, name, default, colName=None):
         self.name = name
@@ -388,7 +400,24 @@ class CattyBase:
         return
 
     @classmethod
-    def loadFromCache(cls):
+    def loadcsv(cls):
+        if cls.descriptor.writeable:
+            raise AttributeError("must be excel table")
+        from data.excel2csv import loadCsvData
+        res = loadCsvData(cls)
+        for fields in res:
+            data = cls._genDataByList(fields)
+            cls._newData(data, _doTrace=False)
+        return
+
+    @classmethod
+    def reload(cls):
+        if cls.descriptor.writeable:
+            raise AttributeError("must be excel table")
+        cls._all = set()
+        for index in cls.descriptor.indexList:
+            index.clean()
+        cls.loadcsv()
         return
 
     @classmethod

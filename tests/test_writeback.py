@@ -7,7 +7,7 @@ from util.dbpool import getConn
 from persist.writeback import incrementSaveAll
 
 
-class CattyTest(unittest.TestCase):
+class Test(unittest.TestCase):
     conn = getConn()
 
     @classmethod

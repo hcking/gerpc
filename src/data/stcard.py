@@ -12,7 +12,6 @@ class TableStConst(CattyBase, metaclass=CattyMeta):
         name='玩家信息表.xlsx',
         tbl='st_const',
         writeable=False,
-        reloadable=True,
         fieldList=[
             FieldDescriptor(
                 name='constName',
@@ -39,11 +38,10 @@ class TableStGold77Bonus(CattyBase, metaclass=CattyMeta):
         name='玩家信息表.xlsx',
         tbl='st_gold77bonus',
         writeable=False,
-        reloadable=True,
         fieldList=[
             FieldDescriptor(
                 name='playerlv',
-                default="",
+                default=0,
                 colName='A',
             ),
             FieldDescriptor(
@@ -66,7 +64,6 @@ class TableStAttributeIndex(CattyBase, metaclass=CattyMeta):
         name='玩家信息表.xlsx',
         tbl='st_attributeindex',
         writeable=False,
-        reloadable=True,
         fieldList=[
             FieldDescriptor(
                 name='id',
@@ -122,12 +119,8 @@ reloadDataList = [
 
 def loadReloadDataList():
     for t in reloadDataList:
-        t.loadFromCache()
+        t.loadcsv()
     return
 
 
-def AllExcel2Csv():
-    from data.excel2csv import excel2Csv
-    for table in reloadDataList:
-        excel2Csv(table)
-    return
+
