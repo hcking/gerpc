@@ -5,6 +5,11 @@ from persist.catty import (
     CattyBase,
     CattyMeta,
 )
+from persist.loader import (
+    defaultInt,
+    defaultStr,
+    defaultFloat,
+)
 
 
 class TableStConst(CattyBase, metaclass=CattyMeta):
@@ -14,19 +19,19 @@ class TableStConst(CattyBase, metaclass=CattyMeta):
         writeable=False,
         fieldList=[
             FieldDescriptor(
-                name='constName',
-                default="",
+                name='constname',
+                default=defaultStr,
                 colName='A',
             ),
             FieldDescriptor(
                 name='value',
-                default=0,
+                default=defaultInt,
                 colName='B',
             ),
         ],
         indexList=[
             HashIndex(
-                cols=('constName',),
+                cols=('constname',),
                 unique=True,
             ),
         ],
@@ -41,12 +46,12 @@ class TableStGold77Bonus(CattyBase, metaclass=CattyMeta):
         fieldList=[
             FieldDescriptor(
                 name='playerlv',
-                default=0,
+                default=defaultInt,
                 colName='A',
             ),
             FieldDescriptor(
                 name='bonusratio',
-                default=0,
+                default=defaultFloat,
                 colName='B',
             ),
         ],
@@ -67,37 +72,37 @@ class TableStAttributeIndex(CattyBase, metaclass=CattyMeta):
         fieldList=[
             FieldDescriptor(
                 name='id',
-                default="",
+                default=defaultInt,
                 colName='A',
             ),
             FieldDescriptor(
                 name='attriname',
-                default=0,
+                default=defaultStr,
                 colName='B',
             ),
             FieldDescriptor(
                 name='attributetype',
-                default=0,
+                default=defaultInt,
                 colName='C',
             ),
             FieldDescriptor(
                 name='floatnum',
-                default=0,
+                default=defaultInt,
                 colName='D',
             ),
             FieldDescriptor(
                 name='type',
-                default=0,
+                default=defaultInt,
                 colName='E',
             ),
             FieldDescriptor(
                 name='attrirow',
-                default=0,
+                default=defaultInt,
                 colName='G',
             ),
             FieldDescriptor(
                 name='attricolumn',
-                default=0,
+                default=defaultInt,
                 colName='H',
             ),
         ],
@@ -121,6 +126,3 @@ def loadReloadDataList():
     for t in reloadDataList:
         t.loadcsv()
     return
-
-
-

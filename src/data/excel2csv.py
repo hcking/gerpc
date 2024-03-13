@@ -4,6 +4,7 @@ import os.path
 import pandas as pd
 
 from util.fn import getSrcPath
+from persist.loader import convertMap
 
 
 def getExcelPath(card):
@@ -75,7 +76,18 @@ def loadCsvData(card):
     csvFile = getCsvPath(card)
     skipRowNo = 2
     df = pd.read_csv(csvFile, encoding='utf-8', skiprows=skipRowNo, header=None)
+
     for index, row in df.iterrows():
+        # convert type
         line = tuple(row)
-        res.append(line)
+        newLine = []
+        for no, val in enumerate(line):
+            field = card.descriptor.fieldList[no]
+            converter = convertMap[field.default]
+            try:
+                newLine.append(converter(val))
+            except Exception as ex:
+                raise Exception('loadCsvData',ex, card, field, line)
+
+        res.append(newLine)
     return res

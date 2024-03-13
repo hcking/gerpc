@@ -191,7 +191,7 @@ class Descriptor:
 
 
 class FieldDescriptor:
-    __slots__ = ('name', 'default', 'idx', 'colName')
+    __slots__ = ('name', 'default', 'idx', 'colName', 'converter')
 
     def __str__(self):
         return '<%s %s %s>' % (self.__class__.__name__, self.name, self.colName)
@@ -199,11 +199,12 @@ class FieldDescriptor:
     def __repr__(self):
         return self.__str__()
 
-    def __init__(self, name, default, colName=None):
+    def __init__(self, name, default, colName=None, converter=None):
         self.name = name
         self.default = default
         self.idx = None
         self.colName = colName
+        self.converter = converter
 
 
 class CattyMeta(type):
@@ -304,9 +305,9 @@ class CattyBase:
         return data
 
     @classmethod
-    def i_checkType(cls, val, field):
+    def i_checkType(cls, val, field, data=None):
         if not isinstance(val, type(field.default)):
-            raise TypeError(cls.descriptor, field, field.default, val)
+            raise TypeError(cls.descriptor, field, field.default, val, data)
         return
 
     @classmethod
@@ -329,7 +330,7 @@ class CattyBase:
 
         for field in cls.descriptor.fieldList:
             val = data[field.name]
-            cls.i_checkType(val, field)
+            cls.i_checkType(val, field, data)
 
         obj = Data(cls, data)
 
