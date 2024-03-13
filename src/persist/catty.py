@@ -135,9 +135,20 @@ class Descriptor:
         'primaryIndex',
         'fieldsName',
         'affectIndexMap',
+        'reloadable',
     )
 
-    def __init__(self, name, tbl, fieldList, indexList=None, writeable=False, ordered=False, deletable=False):
+    def __init__(
+            self,
+            name,
+            tbl,
+            fieldList,
+            indexList=None,
+            writeable=False,
+            ordered=False,
+            deletable=False,
+            reloadable=False
+    ):
         self.name = name
         self.tbl = tbl
         self.fieldList = fieldList
@@ -148,6 +159,7 @@ class Descriptor:
         self.primaryIndex = None
         self.fieldsName = {}
         self.affectIndexMap = {}
+        self.reloadable = reloadable
 
         for idx, field in enumerate(self.fieldList):
             field.idx = idx
@@ -221,9 +233,8 @@ class CattyBase:
         return cls._indexMap[indexName].getObj(**kwargs)
 
     @classmethod
-    def showIndexNames(cls):
-        print(cls._indexMap.keys() if cls._indexMap else None)
-        return
+    def getIndexNames(cls):
+        return cls._indexMap.keys() if cls._indexMap else None
 
     @classmethod
     def all(cls):

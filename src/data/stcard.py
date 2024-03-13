@@ -9,9 +9,10 @@ from persist.catty import (
 
 class TableStConst(CattyBase, metaclass=CattyMeta):
     descriptor = Descriptor(
-        name='st_const',
+        name='玩家信息表.xlsx',
         tbl='st_const',
         writeable=False,
+        reloadable=True,
         fieldList=[
             FieldDescriptor(
                 name='constName',
@@ -35,9 +36,10 @@ class TableStConst(CattyBase, metaclass=CattyMeta):
 
 class TableStGold77Bonus(CattyBase, metaclass=CattyMeta):
     descriptor = Descriptor(
-        name='st_gold77bonus',
+        name='玩家信息表.xlsx',
         tbl='st_gold77bonus',
         writeable=False,
+        reloadable=True,
         fieldList=[
             FieldDescriptor(
                 name='playerlv',
@@ -61,9 +63,10 @@ class TableStGold77Bonus(CattyBase, metaclass=CattyMeta):
 
 class TableStAttributeIndex(CattyBase, metaclass=CattyMeta):
     descriptor = Descriptor(
-        name='st_attributeindex',
+        name='玩家信息表.xlsx',
         tbl='st_attributeindex',
         writeable=False,
+        reloadable=True,
         fieldList=[
             FieldDescriptor(
                 name='id',
@@ -103,7 +106,7 @@ class TableStAttributeIndex(CattyBase, metaclass=CattyMeta):
         ],
         indexList=[
             HashIndex(
-                cols=('playerlv',),
+                cols=('id',),
                 unique=True,
             ),
         ],
@@ -120,4 +123,11 @@ reloadDataList = [
 def loadReloadDataList():
     for t in reloadDataList:
         t.loadFromCache()
+    return
+
+
+def AllExcel2Csv():
+    from data.excel2csv import excel2Csv
+    for table in reloadDataList:
+        excel2Csv(table)
     return
