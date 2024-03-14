@@ -23,4 +23,9 @@ class Test(unittest.TestCase):
         self.assertEqual(1, 1)
 
     def test_reload(self):
+        TableStConst.loadcsv()
+        len1 = len(TableStConst.all())
+        TableStConst.reload()
+        len2 = len(TableStConst.all())
+        self.assertEqual(len1, len2)
         return
