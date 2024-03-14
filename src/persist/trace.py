@@ -11,7 +11,7 @@ log = getLogger(__name__)
 
 class Trace:
     def __new__(cls, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplemented
 
     @classmethod
     def traceDelete(cls, tbl, pkVal):

@@ -11,7 +11,7 @@ class Increment:
     _incrementSuffix = 0
 
     def __new__(cls, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplemented
 
     @classmethod
     def setAutoIncrementSuffix(cls, suffix, radix=10, suffixLength=5):
@@ -237,7 +237,7 @@ class CattyBase:
     _isLoadAll = False
 
     def __new__(cls, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplemented
 
     @classmethod
     def getByIndex(cls, indexName, **kwargs):
