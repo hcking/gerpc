@@ -158,27 +158,12 @@ def refreshAtSomeTime3():
     return
 
 
+def timerInit():
+    registerAll()
+    Timer.start()
+
+
 def registerAll():
     Timer.registerTask(refreshAtSomeTime3, 13, 50)
     Timer.registerTask(refreshAtSomeTime2, 0, 30)
     Timer.registerTask(refreshAtSomeTime1, 0, 0)
-
-
-def wait(n):
-    while n > 0:
-        print(Timer.getNowKey())
-        gevent.sleep(1)
-        n -= 1
-    return
-
-
-def main():
-    registerAll()
-
-    Timer.start()
-    wait(10)
-    Timer.kill()
-
-
-if __name__ == '__main__':
-    main()

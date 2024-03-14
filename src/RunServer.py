@@ -9,6 +9,7 @@ from server.server import GameServer
 from util import logger
 from cache import constant
 from persist import writeback
+from util.timer import timerInit, Timer
 
 log = logger.getLogger(name='')
 
@@ -45,6 +46,7 @@ def main():
     gs = GameServer(Configure.address, backdoor=Configure.backdoor)
     constant.gameServer = gs
     gs.start()
+    timerInit()
     log.warning("SystemStart on %s", Configure.address)
     print("SystemStart on %s", Configure.address)
     try:
@@ -56,6 +58,7 @@ def main():
         log.error("RunServer error %s,%s", ex, traceback.format_exc())
     finally:
         writeback.stopTimerWriteBack()
+        Timer.kill()
         systemExit()
 
     return
