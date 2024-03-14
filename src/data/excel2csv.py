@@ -85,7 +85,6 @@ def csv2cache(card):
     if not need:
         return
 
-    excel2csv(card)
     csvFile = getCsvPath(card)
     cacheFile = getCachePath(card)
 
@@ -115,8 +114,7 @@ def checkNeedConvertCache(card):
 
 
 def loadFromCache(card):
-
-    csv2cache(card)
+    updateCache(card)
     cacheFile = getCachePath(card)
     res = pd.read_pickle(cacheFile)
     return res.iterrows()
@@ -124,9 +122,7 @@ def loadFromCache(card):
 
 def loadCsvData(card):
     data = loadFromCache(card)
-
     res = []
-
     for index, row in data:
         line = tuple(row)
         newLine = []
@@ -140,3 +136,9 @@ def loadCsvData(card):
 
         res.append(newLine)
     return res
+
+
+def updateCache(card):
+    excel2csv(card)
+    csv2cache(card)
+    return
