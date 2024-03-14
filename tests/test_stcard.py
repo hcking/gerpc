@@ -17,7 +17,9 @@ class Test(unittest.TestCase):
         TableStAttributeIndex.loadcsv()
         conf183 = TableStGold77Bonus.getByIndex('Playerlv_Idx', playerlv=183)
         print(conf183)
-
+        TableStGold77Bonus.reload()
+        conf183 = TableStGold77Bonus.getByIndex('Playerlv_Idx', playerlv=183)
+        print(conf183)
         self.assertEqual(1, 1)
 
     def test_reload(self):

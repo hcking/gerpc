@@ -6,6 +6,10 @@ import pandas as pd
 from util.fn import getSrcPath
 from persist.loader import convertMap
 
+cachePath = os.path.join(getSrcPath(), '.cache')
+if not os.path.exists(cachePath):
+    os.mkdir(cachePath)
+
 
 def getExcelPath(card):
     res = os.path.join(getSrcPath(), 'config', card.descriptor.name)
@@ -19,6 +23,13 @@ def getCsvPath(card):
     return res
 
 
+def getCachePath(card):
+    sheetName = card.descriptor.tbl
+    cacheName = sheetName + '.cache'
+    res = os.path.join(cachePath, cacheName)
+    return res
+
+
 def getUseCols(card):
     cols = []
     for field in card.descriptor.fieldList:
@@ -29,7 +40,7 @@ def getUseCols(card):
     return res
 
 
-def checkNeedConvert(card):
+def checkNeedConvertCsv(card):
     excelFile = getExcelPath(card)
     csvFile = getCsvPath(card)
 
@@ -55,8 +66,8 @@ def checkNeedConvert(card):
 
 
 def excel2csv(card):
-    isNeed = checkNeedConvert(card)
-    if not isNeed:
+    need = checkNeedConvertCsv(card)
+    if not need:
         return
 
     excelFile = getExcelPath(card)
@@ -65,21 +76,53 @@ def excel2csv(card):
     df = pd.read_excel(excelFile, sheet_name=card.descriptor.tbl, usecols=useCols)
     df.to_csv(csvFile, encoding='utf-8', index=False)
 
-    print('excel2csv', csvFile)
+    print('excel2csv', excelFile, csvFile)
     return
 
 
-def loadFromCache(card):
-    """csv 2 cache"""
+def csv2cache(card):
+    need = checkNeedConvertCache(card)
+    if not need:
+        return
+
+    excel2csv(card)
     csvFile = getCsvPath(card)
+    cacheFile = getCachePath(card)
+
     skipRowNo = 2
     df = pd.read_csv(csvFile, encoding='utf-8', skiprows=skipRowNo, header=None)
-    return df.iterrows()
+    df.to_pickle(cacheFile)
+    print('csv2cache', csvFile, cacheFile)
+    return
+
+
+def checkNeedConvertCache(card):
+    csvFile = getCsvPath(card)
+    cacheFile = getCachePath(card)
+    if not os.path.exists(csvFile):
+        raise Exception("checkNeedConvertCache csvFile not found", csvFile)
+
+    if not os.path.exists(cacheFile):
+        return True
+
+    csvTime = os.path.getmtime(csvFile)
+    cacheTime = os.path.getmtime(cacheFile)
+
+    if csvTime > cacheTime:
+        return True
+
+    return False
+
+
+def loadFromCache(card):
+
+    csv2cache(card)
+    cacheFile = getCachePath(card)
+    res = pd.read_pickle(cacheFile)
+    return res.iterrows()
 
 
 def loadCsvData(card):
-    excel2csv(card)
-
     data = loadFromCache(card)
 
     res = []

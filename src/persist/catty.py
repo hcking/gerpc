@@ -325,7 +325,7 @@ class CattyBase:
         return
 
     @classmethod
-    def _newData(cls, data, _doTrace=True):
+    def _newData(cls, data, _doTrace):
         cls._checkIdx(data)
 
         for field in cls.descriptor.fieldList:
