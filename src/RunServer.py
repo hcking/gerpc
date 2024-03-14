@@ -43,10 +43,13 @@ def systemExit():
 
 def main():
     registerSignal()
+
+    timerInit()
+
     gs = GameServer(Configure.address, backdoor=Configure.backdoor)
     constant.gameServer = gs
     gs.start()
-    timerInit()
+
     log.warning("SystemStart on %s", Configure.address)
     print("SystemStart on %s", Configure.address)
     try:
