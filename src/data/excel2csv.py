@@ -69,16 +69,22 @@ def excel2csv(card):
     return
 
 
-def loadCsvData(card):
-    excel2csv(card)
-
-    res = []
+def loadFromCache(card):
+    """csv 2 cache"""
     csvFile = getCsvPath(card)
     skipRowNo = 2
     df = pd.read_csv(csvFile, encoding='utf-8', skiprows=skipRowNo, header=None)
+    return df.iterrows()
 
-    for index, row in df.iterrows():
-        # convert type
+
+def loadCsvData(card):
+    excel2csv(card)
+
+    data = loadFromCache(card)
+
+    res = []
+
+    for index, row in data:
         line = tuple(row)
         newLine = []
         for no, val in enumerate(line):
@@ -87,7 +93,7 @@ def loadCsvData(card):
             try:
                 newLine.append(converter(val))
             except Exception as ex:
-                raise Exception('loadCsvData',ex, card, field, line)
+                raise Exception('loadCsvData', ex, card, field, line, index)
 
         res.append(newLine)
     return res

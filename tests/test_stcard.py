@@ -19,3 +19,6 @@ class Test(unittest.TestCase):
         print(conf183)
 
         self.assertEqual(1, 1)
+
+    def test_reload(self):
+        return

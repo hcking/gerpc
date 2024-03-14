@@ -1,4 +1,4 @@
-# coding=utf
+# coding=utf8
 
 defaultInt = 0
 defaultStr = ""
