@@ -278,6 +278,10 @@ class CattyBase:
         """
         if force is not True:
             raise AttributeError('!!! too dangerous')
+
+        if not cls.descriptor.writeable:
+            raise AttributeError('can not clean', cls)
+
         _all = cls.all()
         if not _all:
             return
@@ -531,6 +535,9 @@ class Data:
         return self.__str__()
 
     def remove(self):
+        if not self.cls.descriptor.writeable:
+            raise AttributeError('cant remove', self.cls)
+
         writeback.removeObj(self.cls, self)
         return
 
