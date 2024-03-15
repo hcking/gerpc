@@ -1,30 +1,35 @@
 # coding=utf-8
 
 
+if True:
+    from gevent import monkey
+
+    monkey.patch_all()
+
 import traceback
 import signal
+from gevent import signal_handler
 
 from configure import Configure
 from server.server import GameServer
-from util import logger
+from util import logger, timer
 from cache import constant
 from persist import writeback
-from util.timer import timerInit, Timer
 
 log = logger.getLogger(name='')
 
 _isExit = False
 
 
-def SIGINTHandler(sig, frame):
-    _ = frame
-    log.info("SIGINTHandler %s", sig)
+def SIGINTHandler(*args):
+    log.info("SIGINTHandler %s", args)
     systemExit()
     return
 
 
 def registerSignal():
-    signal.signal(signal.SIGINT, SIGINTHandler)
+    # signal.signal(signal.SIGINT, SIGINTHandler)
+    signal_handler(signal.SIGINT, SIGINTHandler)
     return
 
 
@@ -32,6 +37,9 @@ def systemExit():
     global _isExit
     if _isExit:
         return
+
+    writeback.stopTimerWriteBack()
+    timer.Timer.kill()
 
     constant.gameServer.close()
 
@@ -44,24 +52,22 @@ def systemExit():
 def main():
     registerSignal()
 
-    timerInit()
-
-    gs = GameServer(Configure.address, backdoor=Configure.backdoor)
-    constant.gameServer = gs
-    gs.start()
+    constant.gameServer = GameServer(Configure.address, backdoor=Configure.backdoor)
+    constant.gameServer.start()
 
     log.warning("SystemStart on %s", Configure.address)
     print("SystemStart on %s", Configure.address)
+
+    timer.init()
+
     try:
-        gs.serve_forever()
+        constant.gameServer.serve_forever(stop_timeout=3)
     except (KeyboardInterrupt, SystemExit) as err:
         print(err)
     except Exception as ex:
         print(traceback.format_exc())
         log.error("RunServer error %s,%s", ex, traceback.format_exc())
     finally:
-        writeback.stopTimerWriteBack()
-        Timer.kill()
         systemExit()
 
     return

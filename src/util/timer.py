@@ -158,7 +158,7 @@ def refreshAtSomeTime3():
     return
 
 
-def timerInit():
+def init():
     registerAll()
     Timer.start()
 

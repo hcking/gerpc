@@ -217,7 +217,12 @@ def defaultSave():
     global _running, stop_event
     log.warning("defaultSave start")
     while _running:
-        gevent.sleep(_interval)
+        # print('defaultSave')
+        for n in range(_interval):
+            # print('defaultSave step', n)
+            gevent.sleep(1)
+            if not _running:
+                break
         stop_event.clear()
         incrementSaveAll()
         stop_event.set()
@@ -255,8 +260,6 @@ def startTimerWriteBack():
 def stopTimerWriteBack():
     global _running, _saveLet
     _running = False
-    if not Configure.isWindows:
-        stop_event.wait()
+    stop_event.wait()
     _saveLet = None
-    incrementSaveAll()
     return
