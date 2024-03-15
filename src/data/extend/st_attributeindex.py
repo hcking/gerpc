@@ -1,8 +1,6 @@
-import os
 from persist.catty import *
 from persist.loader import *
 
-absPath = os.path.abspath(__file__)
 descriptor = Descriptor(
     name='玩家信息表.xlsx',
     tbl='st_attributeindex',

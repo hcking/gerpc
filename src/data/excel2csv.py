@@ -5,7 +5,7 @@ import pandas as pd
 
 from util.fn import getSrcPath
 
-cachePath = os.path.join(getSrcPath(), '.cache')
+cachePath = os.path.join(getSrcPath(), '.csv_cache')
 
 if not os.path.exists(cachePath):
     os.mkdir(cachePath)
