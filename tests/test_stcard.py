@@ -28,4 +28,6 @@ class Test(unittest.TestCase):
         TableStConst.reload()
         len2 = len(TableStConst.all())
         self.assertEqual(len1, len2)
+        confMaxPower = TableStConst.getByIndex('Constname_Idx', constname='maxpower')
+        self.assertTrue(confMaxPower)
         return
