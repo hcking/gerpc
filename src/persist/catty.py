@@ -426,10 +426,13 @@ class CattyBase:
     def reload(cls):
         if cls.descriptor.writeable:
             raise AttributeError("must be excel table")
+
         cls._all = set()
         cls._all_pk = set()
+
         for index in cls.descriptor.indexList:
             index.clean()
+
         cls.loadcsv()
         return
 
@@ -520,11 +523,12 @@ class CattyBase:
             raise Exception('Multiple auto increment columns in "%s".' % cls.__name__)
 
         cls._indexMap = {}
+        cls._all = set()
+        cls._all_pk = set()
+
         cls._autoIndex = autoIndex[0] if autoIndex else None
         cls._autoIncrementValue = 0
 
-        cls._all = set()
-        cls._all_pk = set()
         cls.writeBack = writeback.newWriteBack(cls)
         cls._isLoadAll = False
         return
