@@ -3,6 +3,7 @@
 from collections import OrderedDict
 from persist import writeback
 from persist.fn import escape, getPrimaryValue, getIndex
+from data.excel2csv import loadCsvData
 
 
 class Increment:
@@ -220,6 +221,7 @@ class CattyMeta(type):
 
 
 class CattyBase:
+    source = None
     descriptor = None
 
     _indexMap = None
@@ -413,7 +415,7 @@ class CattyBase:
     def loadcsv(cls):
         if cls.descriptor.writeable:
             raise AttributeError("must be excel table")
-        from data.excel2csv import loadCsvData
+
         res = loadCsvData(cls)
         for fields in res:
             data = cls._genDataByList(fields)

@@ -7,6 +7,9 @@ from data.stcard import (
     TableStGold77Bonus,
     TableStAttributeIndex,
 )
+import os
+
+absPathFile = os.path.abspath(__file__)
 
 
 class Test(unittest.TestCase):
@@ -15,12 +18,12 @@ class Test(unittest.TestCase):
         TableStConst.loadcsv()
         TableStGold77Bonus.loadcsv()
         TableStAttributeIndex.loadcsv()
-        conf183 = TableStGold77Bonus.getByIndex('Playerlv_Idx', playerlv=183)
-        print(conf183)
+        conf_183_1 = TableStGold77Bonus.getByIndex('Playerlv_Idx', playerlv=183)
+        self.assertTrue(conf_183_1)
         TableStGold77Bonus.reload()
-        conf183 = TableStGold77Bonus.getByIndex('Playerlv_Idx', playerlv=183)
-        print(conf183)
-        self.assertEqual(1, 1)
+        conf_183_2 = TableStGold77Bonus.getByIndex('Playerlv_Idx', playerlv=183)
+        self.assertTrue(conf_183_2)
+        self.assertEqual(conf_183_1.get('playerlv'), conf_183_2.get('playerlv'))
 
     def test_reload(self):
         TableStConst.loadcsv()

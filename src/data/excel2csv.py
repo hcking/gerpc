@@ -4,9 +4,9 @@ import os.path
 import pandas as pd
 
 from util.fn import getSrcPath
-from persist.loader import convertMap
 
 cachePath = os.path.join(getSrcPath(), '.cache')
+
 if not os.path.exists(cachePath):
     os.mkdir(cachePath)
 
@@ -28,6 +28,11 @@ def getCachePath(card):
     cacheName = sheetName + '.cache'
     res = os.path.join(cachePath, cacheName)
     return res
+
+
+def getDefineSourcePath(card):
+    sourceFile = card.source.__file__
+    return sourceFile
 
 
 def getUseCols(card):
@@ -98,14 +103,23 @@ def csv2cache(card):
 def checkNeedConvertCache(card):
     csvFile = getCsvPath(card)
     cacheFile = getCachePath(card)
+    sourceFile = getDefineSourcePath(card)
+
     if not os.path.exists(csvFile):
         raise Exception("checkNeedConvertCache csvFile not found", csvFile)
+
+    if not os.path.exists(sourceFile):
+        raise Exception("checkNeedConvertCache sourceFile not found", sourceFile)
 
     if not os.path.exists(cacheFile):
         return True
 
     csvTime = os.path.getmtime(csvFile)
     cacheTime = os.path.getmtime(cacheFile)
+    defTime = os.path.getmtime(sourceFile)
+
+    if defTime > cacheTime:
+        return True
 
     if csvTime > cacheTime:
         return True
@@ -121,6 +135,7 @@ def loadFromCache(card):
 
 
 def loadCsvData(card):
+    from persist.loader import convertMap
     data = loadFromCache(card)
     res = []
     for index, row in data:
