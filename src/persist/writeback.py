@@ -8,7 +8,6 @@ from persist.fn import getPrimaryValue, escape
 
 from util.dbpool import getConn
 from util.logger import getLogger
-from configure import Configure
 
 log = getLogger(__name__)
 
@@ -219,7 +218,7 @@ def defaultSave():
     while _running:
         # print('defaultSave')
         for n in range(_interval):
-            # print('defaultSave step', n)
+            # print('defaultSave step', n, _interval)
             gevent.sleep(1)
             if not _running:
                 break
