@@ -21,7 +21,6 @@ class WriteBack:
 
         self.cls = cls
 
-        self.record_pk = set()  # record all data pk
         self.record_pk_delete = set()  # record delete data pk
 
         # current data
@@ -116,12 +115,9 @@ class WriteBack:
 
 
 def newWriteBack(cls):
-    if not cls.descriptor.writeable:
-        return None
-
     global WriteBackList
     wb = WriteBack(cls)
-    if wb not in WriteBackList:
+    if cls.descriptor.writeable and wb not in WriteBackList:
         WriteBackList.append(wb)
 
     return wb
@@ -143,14 +139,14 @@ def changeObj(cls, obj, beforeVal, value, attr):
 
 def removeObj(cls, obj):
     cls._all.discard(obj)
+    pkVal = getPrimaryValue(obj.data, cls.descriptor)
+    cls._all_pk.discard(pkVal)
 
     for index in cls.descriptor.indexList:
         index.removeObj(obj)
 
     if cls.descriptor.writeable:
         cls.writeBack.record_delete.add(obj)
-        pkVal = getPrimaryValue(obj.data, cls.descriptor)
-        cls.writeBack.record_pk.discard(pkVal)
         cls.writeBack.record_pk_delete.add(pkVal)
         Trace.traceDelete(
             tbl=cls.descriptor.tbl,
@@ -160,10 +156,6 @@ def removeObj(cls, obj):
 
 
 def newObj(cls, obj, _doTrace):
-    if not cls.descriptor.writeable:
-        return
-    pkVal = getPrimaryValue(obj.data, cls.descriptor)
-    cls.writeBack.record_pk.add(pkVal)
     if _doTrace:
         cls.writeBack.record_insert.add(obj)
         Trace.traceNew(cls.descriptor.tbl, tuple(obj.data.values()))

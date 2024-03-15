@@ -225,7 +225,9 @@ class CattyBase:
     _indexMap = None
     _autoIndex = None
     _autoIncrementValue = None
+
     _all = None
+    _all_pk = None
     _isConfig = False
 
     sql_delete = None
@@ -340,13 +342,16 @@ class CattyBase:
 
         if cls.writeBack:
             pk = getPrimaryValue(data, cls.descriptor)
-            if pk in cls.writeBack.record_pk or pk in cls.writeBack.record_pk_delete:
+            if pk in cls._all_pk or pk in cls.writeBack.record_pk_delete:
                 return
 
         for index in cls.descriptor.indexList:
             index.addObj(obj)
 
         cls._all.add(obj)
+        pkVal = getPrimaryValue(obj.data, cls.descriptor)
+        cls._all_pk.add(pkVal)
+
         writeback.newObj(cls, obj, _doTrace=_doTrace)
         return obj
 
@@ -420,6 +425,7 @@ class CattyBase:
         if cls.descriptor.writeable:
             raise AttributeError("must be excel table")
         cls._all = set()
+        cls._all_pk = set()
         for index in cls.descriptor.indexList:
             index.clean()
         cls.loadcsv()
@@ -516,6 +522,7 @@ class CattyBase:
         cls._autoIncrementValue = 0
 
         cls._all = set()
+        cls._all_pk = set()
         cls.writeBack = writeback.newWriteBack(cls)
         cls._isLoadAll = False
         return
@@ -536,7 +543,7 @@ class Data:
 
     def remove(self):
         if not self.cls.descriptor.writeable:
-            raise AttributeError('cant remove', self.cls)
+            raise AttributeError('cant remove', self.cls, self)
 
         writeback.removeObj(self.cls, self)
         return
