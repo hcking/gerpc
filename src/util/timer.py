@@ -2,6 +2,9 @@
 import gevent
 import traceback
 from datetime import datetime, timedelta
+from util.logger import getLogger
+
+log = getLogger(__name__)
 
 
 class Task:
@@ -47,7 +50,7 @@ class Timer:
             timeGap = cls.getTaskWaitTime(task)
             now = int(datetime.now().timestamp())
 
-            print('_run', now, timeGap, now + timeGap, task)
+            log.info('_run %s,%s,%s,%s', now, timeGap, now + timeGap, task)
             cls._job = gevent.spawn_later(timeGap, task.run)
             cls._job.join()
             cls._next()
@@ -138,23 +141,23 @@ class Timer:
 
 
 def refreshAtSomeTime1():
-    print('refreshAtSomeTime1 begin')
+    log.info('refreshAtSomeTime1 begin')
     gevent.sleep(3)
-    print('refreshAtSomeTime1 end')
+    log.info('refreshAtSomeTime1 end')
     return
 
 
 def refreshAtSomeTime2():
-    print('refreshAtSomeTime2 begin')
+    log.info('refreshAtSomeTime2 begin')
     gevent.sleep(3)
-    print('refreshAtSomeTime2 end')
+    log.info('refreshAtSomeTime2 end')
     return
 
 
 def refreshAtSomeTime3():
-    print('refreshAtSomeTime3 begin')
+    log.info('refreshAtSomeTime3 begin')
     gevent.sleep(3)
-    print('refreshAtSomeTime3 end')
+    log.info('refreshAtSomeTime3 end')
     return
 
 
