@@ -424,7 +424,7 @@ class CattyBase:
         if cls.descriptor.writeable:
             raise AttributeError("must be excel table")
 
-        cls._all = OrderedDict()
+        cls._all.clear()
         cls._all_pk = set()
 
         for index in cls.descriptor.indexList:
