@@ -425,7 +425,7 @@ class CattyBase:
             raise AttributeError("must be excel table")
 
         cls._all.clear()
-        cls._all_pk = set()
+        cls._all_pk.clear()
 
         for index in cls.descriptor.indexList:
             index.clean()
