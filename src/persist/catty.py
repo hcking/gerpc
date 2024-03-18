@@ -134,7 +134,6 @@ class Descriptor:
         'fieldList',
         'indexList',
         'writeable',
-        'ordered',
         'deletable',
         'primaryIndex',
         'fieldsName',
@@ -154,7 +153,6 @@ class Descriptor:
             fieldList,
             indexList=None,
             writeable=False,
-            ordered=False,
             deletable=False,
     ):
         self.name = name
@@ -162,7 +160,6 @@ class Descriptor:
         self.fieldList = fieldList
         self.indexList = indexList
         self.writeable = writeable
-        self.ordered = ordered
         self.deletable = deletable
         self.primaryIndex = None
         self.fieldsName = {}
@@ -255,7 +252,7 @@ class CattyBase:
 
     @classmethod
     def all(cls):
-        return cls._all
+        return cls._all.keys()
 
     @classmethod
     def new(cls, **kwargs):
@@ -350,7 +347,7 @@ class CattyBase:
         for index in cls.descriptor.indexList:
             index.addObj(obj)
 
-        cls._all.add(obj)
+        cls._all.setdefault(obj)
         pkVal = getPrimaryValue(obj.data, cls.descriptor)
         cls._all_pk.add(pkVal)
 
@@ -427,7 +424,7 @@ class CattyBase:
         if cls.descriptor.writeable:
             raise AttributeError("must be excel table")
 
-        cls._all = set()
+        cls._all = OrderedDict()
         cls._all_pk = set()
 
         for index in cls.descriptor.indexList:
@@ -523,7 +520,7 @@ class CattyBase:
             raise Exception('Multiple auto increment columns in "%s".' % cls.__name__)
 
         cls._indexMap = {}
-        cls._all = set()
+        cls._all = OrderedDict()
         cls._all_pk = set()
 
         cls._autoIndex = autoIndex[0] if autoIndex else None

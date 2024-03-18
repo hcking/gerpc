@@ -137,7 +137,8 @@ def changeObj(cls, obj, beforeVal, value, attr):
 
 
 def removeObj(cls, obj):
-    cls._all.discard(obj)
+    if obj in cls._all:
+        cls._all.pop(obj)
     pkVal = getPrimaryValue(obj.data, cls.descriptor)
     cls._all_pk.discard(pkVal)
 
