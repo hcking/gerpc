@@ -19,6 +19,7 @@ class Role(CattyBase, metaclass=CattyMeta):
         name='roles',
         tbl='roles',
         writeable=True,
+        deletable=True,
         fieldList=[
             FieldDescriptor(
                 name='role_id',
@@ -92,6 +93,7 @@ class RoleMailList(CattyBase, metaclass=CattyMeta):
         name='mail_list',
         tbl='mail_list',
         writeable=True,
+        deletable=True,
         fieldList=[
             FieldDescriptor(
                 name='mail_id',

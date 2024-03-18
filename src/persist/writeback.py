@@ -123,8 +123,6 @@ def newWriteBack(cls):
 
 
 def changeObj(cls, obj, beforeVal, value, attr):
-    if not cls.descriptor.writeable:
-        return
     cls.writeBack.record_update.add(obj)
     Trace.traceChange(
         tbl=cls.descriptor.tbl,

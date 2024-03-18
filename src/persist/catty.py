@@ -280,7 +280,7 @@ class CattyBase:
         if force is not True:
             raise AttributeError('!!! too dangerous')
 
-        if not cls.descriptor.writeable:
+        if not cls.descriptor.deletable:
             raise AttributeError('can not clean', cls)
 
         _all = cls.all()
@@ -411,7 +411,7 @@ class CattyBase:
     @classmethod
     def loadcsv(cls):
         if cls.descriptor.writeable:
-            raise AttributeError("must be excel table")
+            raise AttributeError("must be not writeable")
 
         res = loadCsvData(cls)
         for fields in res:
@@ -422,7 +422,7 @@ class CattyBase:
     @classmethod
     def reload(cls):
         if cls.descriptor.writeable:
-            raise AttributeError("must be excel table")
+            raise AttributeError("must be not writeable")
 
         cls._all.clear()
         cls._all_pk.clear()
@@ -545,7 +545,7 @@ class Data:
         return self.__str__()
 
     def remove(self):
-        if not self.cls.descriptor.writeable:
+        if not self.cls.descriptor.deletable:
             raise AttributeError('cant remove', self.cls, self)
 
         writeback.removeObj(self.cls, self)
@@ -558,7 +558,7 @@ class Data:
 
     def set(self, attr, value):
         if not self.cls.descriptor.writeable:
-            raise AttributeError('%s is none writeable.' % self.cls.__class__)
+            raise AttributeError('%s is not writeable.' % self.cls.__class__)
 
         if attr in self.cls.descriptor.primaryIndex.cols:
             raise AttributeError("Can't modify primary key")
