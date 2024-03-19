@@ -34,3 +34,17 @@ class Test(unittest.TestCase):
         confMaxPower = TableStConst.getByIndex('Constname_Idx', constname='maxpower')
         self.assertTrue(confMaxPower)
         return
+
+    def test_remove(self):
+        TableStConst.loadcsv()
+        len1 = len(TableStConst.all())
+        confMaxPower = TableStConst.getByIndex('Constname_Idx', constname='maxpower')
+        confMaxPower.remove()
+        len2 = len(TableStConst.all())
+        confMaxPower = TableStConst.getByIndex('Constname_Idx', constname='maxpower')
+        self.assertEqual(confMaxPower, None)
+        self.assertEqual(len1 - 1, len2)
+
+        TableStConst.reload()
+        len3 = len(TableStConst.all())
+        self.assertEqual(len1, len3)

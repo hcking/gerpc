@@ -5,6 +5,7 @@ descriptor = Descriptor(
     name='玩家信息表.xlsx',
     tbl='st_const',
     writeable=False,
+    deletable=True,
     fieldList=[
         FieldDescriptor(
             name='constname',
